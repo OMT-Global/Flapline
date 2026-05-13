@@ -262,6 +262,21 @@ ci:
         build
 
       bash scripts/ci/run-fast-checks.sh
+  dependabot:
+    enabled: true
+    securityUpdates: true
+    versionUpdates: true
+    ecosystems:
+      - packageEcosystem: npm
+        directory: /
+        interval: weekly
+        groupMinorAndPatch: true
+        ignoreMajorUpdates: true
+      - packageEcosystem: github-actions
+        directory: /
+        interval: weekly
+        groupMinorAndPatch: false
+        ignoreMajorUpdates: true
   aiAttestation:
     enabled: false
     artifactName: ai-attestation
