@@ -10,7 +10,6 @@ concurrency:
 
 permissions:
   contents: read
-  pull-requests: read
 
 env:
   NODE_VERSION: '20'
@@ -23,11 +22,10 @@ defaults:
 jobs:
   changes:
     name: Detect Relevant Changes
-    runs-on: ['self-hosted', 'synology', 'shell-only', 'public']
+    runs-on: ['self-hosted', 'linux', 'shell-only', 'public']
     outputs:
       app: ${{ steps.filter.outputs.app }}
       ci: ${{ steps.filter.outputs.ci }}
-      apple: ${{ steps.filter.outputs.apple }}
     steps:
       - uses: dorny/paths-filter@v3
         id: filter
@@ -57,13 +55,10 @@ jobs:
               - 'docs/bootstrap/**'
               - '.env.example'
               - 'CODEOWNERS'
-            apple:
-              - 'SplitFlap/**'
-              - 'SplitFlap.xcodeproj/**'
 
   fast-checks:
     name: Fast Checks
-    runs-on: ['self-hosted', 'synology', 'shell-only', 'public']
+    runs-on: ['self-hosted', 'linux', 'shell-only', 'public']
     timeout-minutes: 15
     needs: changes
     if: >-
@@ -77,34 +72,9 @@ jobs:
       - name: Run fast checks
         run: bash scripts/ci/run-fast-checks.sh
 
-
-  macos-checks:
-    name: macOS Checks
-    runs-on: ['self-hosted', 'private', 'macOS', 'ARM64', 'xcode']
-    timeout-minutes: 15
-    needs: changes
-    if: >-
-      github.event.pull_request.draft == false &&
-      needs.changes.outputs.apple == 'true'
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-
-      - name: Run macOS validation
-        run: |
-          xcodebuild \
-            -project SplitFlap.xcodeproj \
-            -scheme SplitFlap \
-            -configuration Release \
-            -derivedDataPath build \
-            ONLY_ACTIVE_ARCH=NO \
-            build
-
-
   validate-pr-description:
     name: Validate PR Description
-    runs-on: ['self-hosted', 'synology', 'shell-only', 'public']
+    runs-on: ['self-hosted', 'linux', 'shell-only', 'public']
     timeout-minutes: 5
     if: github.event.pull_request.draft == false
     env:
@@ -154,7 +124,7 @@ jobs:
 
   validate-secrets:
     name: Validate Secrets
-    runs-on: ['self-hosted', 'synology', 'shell-only', 'public']
+    runs-on: ['self-hosted', 'linux', 'shell-only', 'public']
     timeout-minutes: 10
     if: github.event.pull_request.draft == false
     steps:
@@ -166,13 +136,12 @@ jobs:
 
   ci-gate:
     name: CI Gate
-    runs-on: ['self-hosted', 'synology', 'shell-only', 'public']
+    runs-on: ['self-hosted', 'linux', 'shell-only', 'public']
     if: always()
     needs:
       - changes
       - fast-checks
       - validate-pr-description
-      - macos-checks
       - validate-secrets
     steps:
       - name: Check required PR jobs
@@ -181,7 +150,6 @@ jobs:
             changes=${{ needs.changes.result }}
             fast-checks=${{ needs.fast-checks.result }}
             validate-pr-description=${{ needs.validate-pr-description.result }}
-            macos-checks=${{ needs.macos-checks.result }}
             validate-secrets=${{ needs.validate-secrets.result }}
         run: |
           failed=0
