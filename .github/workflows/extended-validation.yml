@@ -96,12 +96,31 @@ jobs:
     runs-on: ['self-hosted', 'linux', 'shell-only', 'public']
     timeout-minutes: 20
     needs: changes
-    if: needs.changes.outputs.extended == 'true' || needs.changes.outputs.app == 'true'
+    if: needs.changes.outputs.extended == 'true'
     steps:
       - uses: actions/checkout@v4
 
       - name: Run extended validation
         run: bash scripts/ci/run-extended-validation.sh
+
+  macos-checks:
+    name: macOS Checks
+    runs-on: ['self-hosted', 'private', 'macOS', 'ARM64', 'xcode']
+    timeout-minutes: 20
+    needs: changes
+    if: needs.changes.outputs.app == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run macOS validation
+        run: |
+          xcodebuild \
+            -project SplitFlap.xcodeproj \
+            -scheme SplitFlap \
+            -configuration Release \
+            -derivedDataPath build \
+            ONLY_ACTIVE_ARCH=NO \
+            build
 
   validate-secrets:
     name: Validate Secrets
@@ -120,6 +139,7 @@ jobs:
       - changes
       - fast-checks
       - extended-checks
+      - macos-checks
       - validate-secrets
     steps:
       - name: Check extended validation jobs
@@ -128,6 +148,7 @@ jobs:
             changes=${{ needs.changes.result }}
             fast-checks=${{ needs.fast-checks.result }}
             extended-checks=${{ needs.extended-checks.result }}
+            macos-checks=${{ needs.macos-checks.result }}
             validate-secrets=${{ needs.validate-secrets.result }}
         run: |
           failed=0

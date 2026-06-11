@@ -10,6 +10,7 @@ concurrency:
 
 permissions:
   contents: read
+  pull-requests: read
 
 env:
   NODE_VERSION: '20'
@@ -26,6 +27,7 @@ jobs:
     outputs:
       app: ${{ steps.filter.outputs.app }}
       ci: ${{ steps.filter.outputs.ci }}
+      apple: ${{ steps.filter.outputs.apple }}
     steps:
       - uses: dorny/paths-filter@v3
         id: filter
@@ -55,6 +57,9 @@ jobs:
               - 'docs/bootstrap/**'
               - '.env.example'
               - 'CODEOWNERS'
+            apple:
+              - 'SplitFlap/**'
+              - 'SplitFlap.xcodeproj/**'
 
   fast-checks:
     name: Fast Checks
@@ -71,6 +76,29 @@ jobs:
 
       - name: Run fast checks
         run: bash scripts/ci/run-fast-checks.sh
+
+  macos-checks:
+    name: macOS Checks
+    runs-on: ['self-hosted', 'private', 'macOS', 'ARM64', 'xcode']
+    timeout-minutes: 15
+    needs: changes
+    if: >-
+      github.event.pull_request.draft == false &&
+      needs.changes.outputs.apple == 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Run macOS validation
+        run: |
+          xcodebuild \
+            -project SplitFlap.xcodeproj \
+            -scheme SplitFlap \
+            -configuration Release \
+            -derivedDataPath build \
+            ONLY_ACTIVE_ARCH=NO \
+            build
 
   validate-pr-description:
     name: Validate PR Description
@@ -141,6 +169,7 @@ jobs:
     needs:
       - changes
       - fast-checks
+      - macos-checks
       - validate-pr-description
       - validate-secrets
     steps:
@@ -149,6 +178,7 @@ jobs:
           RESULTS: >-
             changes=${{ needs.changes.result }}
             fast-checks=${{ needs.fast-checks.result }}
+            macos-checks=${{ needs.macos-checks.result }}
             validate-pr-description=${{ needs.validate-pr-description.result }}
             validate-secrets=${{ needs.validate-secrets.result }}
         run: |
