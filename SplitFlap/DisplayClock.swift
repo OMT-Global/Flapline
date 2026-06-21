@@ -155,9 +155,7 @@ final class DisplayClock: NSObject {
 
         if isPreview, let grid {
             applyTargets(contentProvider.nextTargets(rows: grid.rows, cols: grid.cols, preview: true), grid: grid)
-        } else if configuration.displayMode == .clock, let grid {
-            startWave(grid: grid)
-        } else if configuration.displayMode != .random, let grid {
+        } else if shouldSeedInitialWave, let grid {
             startWave(grid: grid)
         }
     }
@@ -326,12 +324,20 @@ final class DisplayClock: NSObject {
         startWave(grid: grid)
     }
 
-    private var idleTickDuration: Int {
+    private var shouldSeedInitialWave: Bool {
+        configuration.displayMode != .random || !configuration.idleShuffleEnabled
+    }
+
+    private var cycleTickDuration: Int {
         max(1, Int(configuration.waveIntervalSeconds / idleTickInterval))
     }
 
+    private var idleTickDuration: Int {
+        max(1, cycleTickDuration - waveTickDuration)
+    }
+
     private var waveTickDuration: Int {
-        max(20, idleTickDuration / 2)
+        max(20, cycleTickDuration / 2)
     }
 
     private func applyTargets(_ targets: [[SplitFlapCharacter]], grid: CharacterGrid) {

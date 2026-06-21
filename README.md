@@ -45,13 +45,13 @@ Open **System Settings -> Screen Saver**, choose **Flapline**, then open
 
 The options sheet lets you tune:
 
-- Display mode: random board, custom messages, clock, or date
-- Messages: one message per line
-- Message order: sequential or random
-- Wave interval: how often the board updates
-- Idle shuffle: whether panels drift between coordinated waves
-- Board rows: approximate display density
-- Theme: classic amber, terminal green, or monochrome
+- **Display**: random board, custom messages, clock, or date
+- **Messages**: one message per line, including Unicode text and emoji
+- **Message order**: sequential or random
+- **Wave interval**: how often the board updates
+- **Idle shuffle**: whether panels drift between coordinated waves
+- **Board rows**: approximate display density
+- **Theme**: classic amber, terminal green, or monochrome
 
 The original split-flap alphabet still animates through a mechanical forward
 drum sequence. Other Unicode grapheme clusters render directly as valid panel
@@ -118,7 +118,7 @@ domain, signing, website, and release checklist.
 | `scripts/ci/` | Fast, extended, and release validation scripts |
 | `docs/release/` | Public launch and release guidance |
 
-## Part Of OMT Global
+## Part of [OMT Global](https://github.com/omt-global)
 
-Flapline is a small OMT Global project: a father-and-son open-source build with
-an unnecessary amount of care put into tiny moving panels.
+Flapline is a small father-and-son open-source project with an unnecessary
+amount of care put into tiny moving panels.
