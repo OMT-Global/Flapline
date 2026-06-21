@@ -106,6 +106,7 @@ final class DisplayClock: NSObject {
 
     private var ticker: DisplayTicker?
     private var lastIdleTickTimestamp: CFTimeInterval?
+    private var lastClockTickTimestamp: CFTimeInterval?
     private var phase: Phase = .idle
     private var phaseTickCount: Int = 0
     private var isRunning = false
@@ -145,6 +146,7 @@ final class DisplayClock: NSObject {
         phase = .idle
         phaseTickCount = 0
         lastIdleTickTimestamp = nil
+        lastClockTickTimestamp = nil
 
         ticker = makeTicker(screen: screen)
         if ticker == nil {
@@ -153,6 +155,8 @@ final class DisplayClock: NSObject {
 
         if isPreview, let grid {
             applyTargets(contentProvider.nextTargets(rows: grid.rows, cols: grid.cols, preview: true), grid: grid)
+        } else if configuration.displayMode == .clock, let grid {
+            startWave(grid: grid)
         } else if configuration.displayMode != .random, let grid {
             startWave(grid: grid)
         }
@@ -164,6 +168,7 @@ final class DisplayClock: NSObject {
         ticker?.invalidate()
         ticker = nil
         lastIdleTickTimestamp = nil
+        lastClockTickTimestamp = nil
         grid?.allPanelsFlat.forEach { panel in
             if panel.isFlipping {
                 panel.cancelFlip()
@@ -189,6 +194,18 @@ final class DisplayClock: NSObject {
 
     private func displayTick(timestamp: CFTimeInterval) {
         guard isRunning else { return }
+        if configuration.displayMode == .clock {
+            guard let grid = grid else { return }
+            guard let last = lastClockTickTimestamp else {
+                lastClockTickTimestamp = timestamp
+                return
+            }
+            guard timestamp - last >= 1 else { return }
+            lastClockTickTimestamp = timestamp
+            clockTick(grid: grid)
+            return
+        }
+
         guard let last = lastIdleTickTimestamp else {
             lastIdleTickTimestamp = timestamp
             return
@@ -303,6 +320,10 @@ final class DisplayClock: NSObject {
                 )
             }
         }
+    }
+
+    private func clockTick(grid: CharacterGrid) {
+        startWave(grid: grid)
     }
 
     private var idleTickDuration: Int {
