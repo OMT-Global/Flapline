@@ -153,7 +153,7 @@ final class DisplayClock: NSObject {
 
         if isPreview, let grid {
             applyTargets(contentProvider.nextTargets(rows: grid.rows, cols: grid.cols, preview: true), grid: grid)
-        } else if configuration.displayMode != .random, let grid {
+        } else if shouldSeedInitialWave, let grid {
             startWave(grid: grid)
         }
     }
@@ -305,8 +305,12 @@ final class DisplayClock: NSObject {
         }
     }
 
+    private var shouldSeedInitialWave: Bool {
+        configuration.displayMode != .random || !configuration.idleShuffleEnabled
+    }
+
     private var idleTickDuration: Int {
-        max(1, Int(configuration.waveIntervalSeconds / idleTickInterval))
+        max(1, Int(configuration.waveIntervalSeconds / idleTickInterval) - waveTickDuration)
     }
 
     private var waveTickDuration: Int {
