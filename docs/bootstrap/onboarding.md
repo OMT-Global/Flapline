@@ -4,7 +4,7 @@ Use this checklist after the first bootstrap render or whenever `project.bootstr
 
 ## Project
 
-- Repository: `OMT-Global/Screensaver`
+- Repository: `OMT-Global/Flapline`
 - Manifest: `project.bootstrap.yaml`
 
 ## Repo Governance
