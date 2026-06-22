@@ -4,7 +4,7 @@ Configure the Codex Web environment in Codex settings for this bootstrap-managed
 
 ## Project
 
-- Repository: `OMT-Global/Screensaver`
+- Repository: `OMT-Global/Flapline`
 - Manifest: `project.bootstrap.yaml`
 
 ## Environment Settings

@@ -59,6 +59,7 @@ final class SplitFlapConfigureSheetController: NSObject {
         messageTextView.textContainer?.containerSize = NSSize(width: 500, height: CGFloat.greatestFiniteMagnitude)
         messageTextView.textContainer?.widthTracksTextView = true
         messageTextView.font = .systemFont(ofSize: 13)
+        messageTextView.frame = NSRect(x: 0, y: 0, width: 500, height: 120)
 
         let scrollView = NSScrollView()
         scrollView.borderType = .bezelBorder
