@@ -81,7 +81,7 @@ struct ThumbnailRenderer {
         NSColor(calibratedRed: 0.01, green: 0.01, blue: 0.015, alpha: 1).setFill()
         divider.fill()
 
-        let text = "SPLITFLAP" as NSString
+        let text = "FLAPLINE" as NSString
         let font = NSFont.monospacedSystemFont(ofSize: rect.height * 0.105, weight: .semibold)
         let attributes: [NSAttributedString.Key: Any] = [
             .font: font,
