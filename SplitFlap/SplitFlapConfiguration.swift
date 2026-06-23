@@ -83,7 +83,7 @@ enum SplitFlapTheme: String, CaseIterable {
 
 struct SplitFlapConfiguration {
     var displayMode: SplitFlapDisplayMode = .messages
-    var messageText: String = "SplitFlap\nUnicode OK\nHello World"
+    var messageText: String = "Flapline\nUnicode OK\nHello World"
     var messageOrder: SplitFlapMessageOrder = .sequential
     var waveIntervalSeconds: TimeInterval = 8
     var idleShuffleEnabled: Bool = true
@@ -96,7 +96,7 @@ struct SplitFlapConfiguration {
             .split(whereSeparator: \.isNewline)
             .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
-        return lines.isEmpty ? ["SplitFlap"] : lines
+        return lines.isEmpty ? ["Flapline"] : lines
     }
 
     func rowCount(isPreview: Bool) -> Int {
@@ -108,7 +108,8 @@ struct SplitFlapConfiguration {
 }
 
 enum SplitFlapConfigurationStore {
-    private static let moduleName = "com.omt.SplitFlap"
+    private static let moduleName = "app.flapline.screensaver"
+    private static let legacyModuleName = "com.omt.SplitFlap"
 
     private enum Key {
         static let displayMode = "displayMode"
@@ -119,6 +120,17 @@ enum SplitFlapConfigurationStore {
         static let idleDensity = "idleDensity"
         static let targetRows = "targetRows"
         static let theme = "theme"
+
+        static let all = [
+            displayMode,
+            messageText,
+            messageOrder,
+            waveIntervalSeconds,
+            idleShuffleEnabled,
+            idleDensity,
+            targetRows,
+            theme
+        ]
     }
 
     private static var defaults: UserDefaults {
@@ -128,6 +140,7 @@ enum SplitFlapConfigurationStore {
     static func load() -> SplitFlapConfiguration {
         let fallback = SplitFlapConfiguration()
         let defaults = defaults
+        migrateLegacyDefaultsIfNeeded(to: defaults)
         defaults.register(defaults: [
             Key.displayMode: fallback.displayMode.rawValue,
             Key.messageText: fallback.messageText,
@@ -162,6 +175,24 @@ enum SplitFlapConfigurationStore {
         defaults.set(configuration.targetRows, forKey: Key.targetRows)
         defaults.set(configuration.theme.rawValue, forKey: Key.theme)
         defaults.synchronize()
+    }
+
+    private static func migrateLegacyDefaultsIfNeeded(to defaults: UserDefaults) {
+        guard !hasSavedConfiguration(in: defaults),
+              let legacyDefaults = ScreenSaverDefaults(forModuleWithName: legacyModuleName),
+              hasSavedConfiguration(in: legacyDefaults)
+        else { return }
+
+        for key in Key.all {
+            if let value = legacyDefaults.object(forKey: key) {
+                defaults.set(value, forKey: key)
+            }
+        }
+        defaults.synchronize()
+    }
+
+    private static func hasSavedConfiguration(in defaults: UserDefaults) -> Bool {
+        Key.all.contains { defaults.object(forKey: $0) != nil }
     }
 
     private static func bounded(_ value: Double, min: Double, max: Double, fallback: Double) -> Double {
@@ -200,7 +231,7 @@ final class SplitFlapContentProvider {
         switch configuration.displayMode {
         case .random:
             if preview {
-                return textTargets(["SplitFlap"], rows: rows, cols: cols)
+                return textTargets(["Flapline"], rows: rows, cols: cols)
             }
             return randomTargets(rows: rows, cols: cols)
         case .messages:
@@ -222,7 +253,7 @@ final class SplitFlapContentProvider {
             }
             return message
         case .random:
-            return messages.randomElement() ?? "SplitFlap"
+            return messages.randomElement() ?? "Flapline"
         }
     }
 
