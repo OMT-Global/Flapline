@@ -57,7 +57,8 @@ final class SplitFlapView: ScreenSaverView {
         clock = DisplayClock(grid: g, configuration: configuration, isPreview: isPreview)
         clock?.showImmediateFrame()
 
-        // Do NOT use animateOneFrame() timer — all animation is CAAnimation-driven.
+        // Do NOT use animateOneFrame() timer — animation is scheduled by
+        // DisplayClock and played by Core Animation.
         animationTimeInterval = 60.0  // keep ScreenSaverView's empty framework timer cold
     }
 
@@ -81,9 +82,8 @@ final class SplitFlapView: ScreenSaverView {
         stopClock()
     }
 
-    // animateOneFrame is called by ScreenSaverView's built-in timer.
-    // All actual animation runs through CABasicAnimation and DisplayClock,
-    // so we have nothing to do here.
+    // animateOneFrame is called by ScreenSaverView's built-in timer. DisplayClock
+    // schedules coarse updates separately, so we have nothing to do here.
     override func animateOneFrame() {}
 
     // MARK: - Layout
@@ -185,13 +185,9 @@ final class SplitFlapView: ScreenSaverView {
     }
 
     private var shouldRunClock: Bool {
-        guard isAnimating, let window else { return false }
-        if isPreviewInstance {
-            return window.isVisible && !window.isMiniaturized
-        }
+        guard let window else { return false }
         return window.isVisible
             && !window.isMiniaturized
-            && window.occlusionState.contains(.visible)
     }
 
     private func updateClockForVisibility(restartIfRunning: Bool = false) {

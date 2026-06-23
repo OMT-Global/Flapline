@@ -204,6 +204,7 @@ enum SplitFlapConfigurationStore {
 final class SplitFlapContentProvider {
     private var configuration: SplitFlapConfiguration
     private var messageIndex = 0
+    private var messagePageIndex = 0
 
     init(configuration: SplitFlapConfiguration) {
         self.configuration = configuration
@@ -212,14 +213,20 @@ final class SplitFlapContentProvider {
     func update(configuration: SplitFlapConfiguration) {
         self.configuration = configuration
         messageIndex = min(messageIndex, max(configuration.messages.count - 1, 0))
+        messagePageIndex = 0
     }
 
     func nextTargets(rows: Int, cols: Int, preview: Bool = false) -> [[SplitFlapCharacter]] {
         targets(rows: rows, cols: cols, preview: preview, advanceMessages: true)
     }
 
-    func immediateTargets(rows: Int, cols: Int, preview: Bool = false) -> [[SplitFlapCharacter]] {
-        targets(rows: rows, cols: cols, preview: preview, advanceMessages: false)
+    func immediateTargets(
+        rows: Int,
+        cols: Int,
+        preview: Bool = false,
+        advanceMessages: Bool = false
+    ) -> [[SplitFlapCharacter]] {
+        targets(rows: rows, cols: cols, preview: preview, advanceMessages: advanceMessages)
     }
 
     private func targets(
@@ -235,7 +242,7 @@ final class SplitFlapContentProvider {
             }
             return randomTargets(rows: rows, cols: cols)
         case .messages:
-            return textTargets([message(advance: advanceMessages)], rows: rows, cols: cols)
+            return textTargets(messagePage(advance: advanceMessages, rows: rows, cols: cols), rows: rows, cols: cols)
         case .clock:
             return textTargets([Self.clockFormatter.string(from: Date())], rows: rows, cols: cols)
         case .date:
@@ -243,17 +250,38 @@ final class SplitFlapContentProvider {
         }
     }
 
-    private func message(advance: Bool) -> String {
+    private func messagePage(advance: Bool, rows: Int, cols: Int) -> [[SplitFlapCharacter]] {
         let messages = configuration.messages
+        let message: String
         switch configuration.messageOrder {
         case .sequential:
-            let message = messages[messageIndex % messages.count]
-            if advance {
-                messageIndex = (messageIndex + 1) % messages.count
-            }
-            return message
+            message = messages[messageIndex % messages.count]
         case .random:
-            return messages.randomElement() ?? "Flapline"
+            message = messages.randomElement() ?? "Flapline"
+        }
+
+        let pageRows = pagedLines(message, rows: rows, cols: cols)
+        let currentPage = min(messagePageIndex, max(pageRows.count - 1, 0))
+        let visiblePage = pageRows.isEmpty ? [[SplitFlapCharacter.space]] : pageRows[currentPage]
+
+        if advance {
+            advanceMessageCursor(pageCount: max(pageRows.count, 1))
+        }
+
+        return visiblePage
+    }
+
+    private func advanceMessageCursor(pageCount: Int) {
+        switch configuration.messageOrder {
+        case .sequential:
+            if messagePageIndex + 1 < pageCount {
+                messagePageIndex += 1
+            } else {
+                messagePageIndex = 0
+                messageIndex = (messageIndex + 1) % configuration.messages.count
+            }
+        case .random:
+            messagePageIndex = 0
         }
     }
 
@@ -264,19 +292,26 @@ final class SplitFlapContentProvider {
     }
 
     private func textTargets(_ textLines: [String], rows: Int, cols: Int) -> [[SplitFlapCharacter]] {
+        textTargets(textLines.map { SplitFlapCharacter.characters(in: $0) }, rows: rows, cols: cols)
+    }
+
+    private func textTargets(_ textLines: [[SplitFlapCharacter]], rows: Int, cols: Int) -> [[SplitFlapCharacter]] {
         var targets = Array(
             repeating: Array(repeating: SplitFlapCharacter.space, count: cols),
             count: rows
         )
         guard rows > 0, cols > 0 else { return targets }
 
-        let wrapped = textLines.flatMap { wrappedLines($0, maxWidth: cols) }
-        let visibleLines = Array(wrapped.prefix(rows))
-        let startRow = max(0, (rows - visibleLines.count) / 2)
+        let inset = textInset(rows: rows, cols: cols)
+        let contentRows = max(1, rows - inset * 2)
+        let contentCols = max(1, cols - inset * 2)
+        let wrapped = textLines.flatMap { wrappedLines($0, maxWidth: contentCols) }
+        let visibleLines = Array(wrapped.prefix(contentRows))
+        let startRow = inset + max(0, (contentRows - visibleLines.count) / 2)
 
         for (offset, line) in visibleLines.enumerated() {
-            let characters = Array(line.prefix(cols))
-            let startCol = max(0, (cols - characters.count) / 2)
+            let characters = Array(line.prefix(contentCols))
+            let startCol = inset + max(0, (contentCols - characters.count) / 2)
             for (index, character) in characters.enumerated() {
                 targets[startRow + offset][startCol + index] = character
             }
@@ -285,8 +320,24 @@ final class SplitFlapContentProvider {
         return targets
     }
 
+    private func pagedLines(_ text: String, rows: Int, cols: Int) -> [[[SplitFlapCharacter]]] {
+        let inset = textInset(rows: rows, cols: cols)
+        let contentRows = max(1, rows - inset * 2)
+        let contentCols = max(1, cols - inset * 2)
+        let wrapped = wrappedLines(text, maxWidth: contentCols)
+        guard !wrapped.isEmpty else { return [[[.space]]] }
+
+        return stride(from: 0, to: wrapped.count, by: contentRows).map { start in
+            Array(wrapped[start..<min(start + contentRows, wrapped.count)])
+        }
+    }
+
     private func wrappedLines(_ text: String, maxWidth: Int) -> [[SplitFlapCharacter]] {
         let characters = SplitFlapCharacter.characters(in: text)
+        return wrappedLines(characters, maxWidth: maxWidth)
+    }
+
+    private func wrappedLines(_ characters: [SplitFlapCharacter], maxWidth: Int) -> [[SplitFlapCharacter]] {
         guard !characters.isEmpty else { return [[.space]] }
         guard maxWidth > 0 else { return [] }
 
@@ -298,6 +349,10 @@ final class SplitFlapContentProvider {
             index = end
         }
         return lines
+    }
+
+    private func textInset(rows: Int, cols: Int) -> Int {
+        rows > 2 && cols > 2 ? 1 : 0
     }
 
     private static let clockFormatter: DateFormatter = {
