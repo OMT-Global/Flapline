@@ -109,6 +109,7 @@ struct SplitFlapConfiguration {
 
 enum SplitFlapConfigurationStore {
     private static let moduleName = "app.flapline.screensaver"
+    private static let legacyModuleName = "com.omt.SplitFlap"
 
     private enum Key {
         static let displayMode = "displayMode"
@@ -119,6 +120,17 @@ enum SplitFlapConfigurationStore {
         static let idleDensity = "idleDensity"
         static let targetRows = "targetRows"
         static let theme = "theme"
+
+        static let all = [
+            displayMode,
+            messageText,
+            messageOrder,
+            waveIntervalSeconds,
+            idleShuffleEnabled,
+            idleDensity,
+            targetRows,
+            theme
+        ]
     }
 
     private static var defaults: UserDefaults {
@@ -128,6 +140,7 @@ enum SplitFlapConfigurationStore {
     static func load() -> SplitFlapConfiguration {
         let fallback = SplitFlapConfiguration()
         let defaults = defaults
+        migrateLegacyDefaultsIfNeeded(to: defaults)
         defaults.register(defaults: [
             Key.displayMode: fallback.displayMode.rawValue,
             Key.messageText: fallback.messageText,
@@ -162,6 +175,24 @@ enum SplitFlapConfigurationStore {
         defaults.set(configuration.targetRows, forKey: Key.targetRows)
         defaults.set(configuration.theme.rawValue, forKey: Key.theme)
         defaults.synchronize()
+    }
+
+    private static func migrateLegacyDefaultsIfNeeded(to defaults: UserDefaults) {
+        guard !hasSavedConfiguration(in: defaults),
+              let legacyDefaults = ScreenSaverDefaults(forModuleWithName: legacyModuleName),
+              hasSavedConfiguration(in: legacyDefaults)
+        else { return }
+
+        for key in Key.all {
+            if let value = legacyDefaults.object(forKey: key) {
+                defaults.set(value, forKey: key)
+            }
+        }
+        defaults.synchronize()
+    }
+
+    private static func hasSavedConfiguration(in defaults: UserDefaults) -> Bool {
+        Key.all.contains { defaults.object(forKey: $0) != nil }
     }
 
     private static func bounded(_ value: Double, min: Double, max: Double, fallback: Double) -> Double {
