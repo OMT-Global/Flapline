@@ -214,7 +214,7 @@ final class DisplayClock: NSObject {
 
             let panel = all[index]
             guard !panel.isFlipping else { continue }
-            let target = SplitFlapCharacter.random()
+            let target = SplitFlapCharacter.random(in: configuration.randomAlphabet)
             guard panel.currentCharacter != target else { continue }
             animator.animateTo(
                 target,

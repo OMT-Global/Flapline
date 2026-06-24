@@ -14,6 +14,7 @@ final class SplitFlapConfigureSheetController: NSObject, NSWindowDelegate {
     private let holdValueLabel = NSTextField(labelWithString: "")
     private let waveSlider = NSSlider(value: 8, minValue: 2, maxValue: 60, target: nil, action: nil)
     private let waveValueLabel = NSTextField(labelWithString: "")
+    private let randomAlphabetPopup = NSPopUpButton()
     private let idleShuffleButton = NSButton(checkboxWithTitle: "Shuffle idle panels between waves", target: nil, action: nil)
     private let idleDensitySlider = NSSlider(value: 0.04, minValue: 0, maxValue: 0.2, target: nil, action: nil)
     private let idleDensityValueLabel = NSTextField(labelWithString: "")
@@ -25,7 +26,7 @@ final class SplitFlapConfigureSheetController: NSObject, NSWindowDelegate {
         self.configuration = configuration
         self.onSave = onSave
         self.window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 560, height: 560),
+            contentRect: NSRect(x: 0, y: 0, width: 560, height: 600),
             styleMask: [.titled],
             backing: .buffered,
             defer: false
@@ -53,6 +54,7 @@ final class SplitFlapConfigureSheetController: NSObject, NSWindowDelegate {
 
         modePopup.addItems(withTitles: SplitFlapDisplayMode.allCases.map(\.title))
         orderPopup.addItems(withTitles: SplitFlapMessageOrder.allCases.map(\.title))
+        randomAlphabetPopup.addItems(withTitles: SplitFlapRandomAlphabet.allCases.map(\.title))
         themePopup.addItems(withTitles: SplitFlapTheme.allCases.map(\.title))
 
         messageTextView.minSize = NSSize(width: 0, height: 120)
@@ -85,6 +87,7 @@ final class SplitFlapConfigureSheetController: NSObject, NSWindowDelegate {
         stack.addArrangedSubview(row(label: "Message order", control: orderPopup))
         stack.addArrangedSubview(sliderRow(label: "Message hold", slider: holdSlider, valueLabel: holdValueLabel))
         stack.addArrangedSubview(sliderRow(label: "Idle interval", slider: waveSlider, valueLabel: waveValueLabel))
+        stack.addArrangedSubview(row(label: "Random alphabet", control: randomAlphabetPopup))
         stack.addArrangedSubview(idleShuffleButton)
         stack.addArrangedSubview(sliderRow(label: "Idle density", slider: idleDensitySlider, valueLabel: idleDensityValueLabel))
         stack.addArrangedSubview(sliderRow(label: "Board rows", slider: rowsSlider, valueLabel: rowsValueLabel))
@@ -121,6 +124,7 @@ final class SplitFlapConfigureSheetController: NSObject, NSWindowDelegate {
         orderPopup.selectItem(at: SplitFlapMessageOrder.allCases.firstIndex(of: configuration.messageOrder) ?? 0)
         holdSlider.doubleValue = configuration.messageHoldSeconds
         waveSlider.doubleValue = configuration.waveIntervalSeconds
+        randomAlphabetPopup.selectItem(at: SplitFlapRandomAlphabet.allCases.firstIndex(of: configuration.randomAlphabet) ?? 0)
         idleShuffleButton.state = configuration.idleShuffleEnabled ? .on : .off
         idleDensitySlider.doubleValue = configuration.idleDensity
         rowsSlider.integerValue = configuration.targetRows
@@ -173,6 +177,7 @@ final class SplitFlapConfigureSheetController: NSObject, NSWindowDelegate {
         configuration.messageOrder = SplitFlapMessageOrder.allCases[safe: orderPopup.indexOfSelectedItem] ?? .sequential
         configuration.messageHoldSeconds = holdSlider.doubleValue.rounded()
         configuration.waveIntervalSeconds = waveSlider.doubleValue.rounded()
+        configuration.randomAlphabet = SplitFlapRandomAlphabet.allCases[safe: randomAlphabetPopup.indexOfSelectedItem] ?? .classic
         configuration.idleShuffleEnabled = idleShuffleButton.state == .on
         configuration.idleDensity = idleDensitySlider.doubleValue
         configuration.targetRows = rowsSlider.integerValue

@@ -30,6 +30,69 @@ enum SplitFlapMessageOrder: String, CaseIterable {
     }
 }
 
+enum SplitFlapRandomAlphabet: String, CaseIterable {
+    case classic
+    case latinExtended
+    case cyrillic
+    case greek
+    case arabic
+    case mixedWorld
+
+    var title: String {
+        switch self {
+        case .classic: return "Classic"
+        case .latinExtended: return "Latin Extended"
+        case .cyrillic: return "Cyrillic"
+        case .greek: return "Greek"
+        case .arabic: return "Arabic"
+        case .mixedWorld: return "Mixed World"
+        }
+    }
+
+    var characters: [SplitFlapCharacter] {
+        switch self {
+        case .classic:
+            return SplitFlapCharacter.drumCharacters
+        case .latinExtended:
+            return Self.makeCharacters(
+                " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,-/:"
+                + "ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÑÒÓÔÕÖØÙÚÛÜÝ"
+                + "àáâãäåæçèéêëìíîïñòóôõöøùúûüýÿ"
+            )
+        case .cyrillic:
+            return Self.makeCharacters(
+                " АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"
+                + "абвгдеёжзийклмнопрстуфхцчшщъыьэюя"
+            )
+        case .greek:
+            return Self.makeCharacters(
+                " ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ"
+                + "αβγδεζηθικλμνξοπρστυφχψω"
+                + "άέήίόύώϊϋΐΰ"
+            )
+        case .arabic:
+            return Self.makeCharacters(" ابتثجحخدذرزسشصضطظعغفقكلمنهويءآأؤإئىة")
+        case .mixedWorld:
+            return Self.unique(
+                SplitFlapCharacter.drumCharacters
+                + SplitFlapRandomAlphabet.latinExtended.characters
+                + SplitFlapRandomAlphabet.cyrillic.characters
+                + SplitFlapRandomAlphabet.greek.characters
+                + SplitFlapRandomAlphabet.arabic.characters
+            )
+        }
+    }
+
+    private static func makeCharacters(_ string: String) -> [SplitFlapCharacter] {
+        unique(string.map { SplitFlapCharacter(String($0)) })
+    }
+
+    private static func unique(_ characters: [SplitFlapCharacter]) -> [SplitFlapCharacter] {
+        var seen = Set<SplitFlapCharacter>()
+        return characters.filter { seen.insert($0).inserted }
+    }
+}
+
 struct SplitFlapPalette {
     let identifier: String
     let panelBackground: CGColor
@@ -87,6 +150,7 @@ struct SplitFlapConfiguration {
     var messageOrder: SplitFlapMessageOrder = .sequential
     var messageHoldSeconds: TimeInterval = 4
     var waveIntervalSeconds: TimeInterval = 8
+    var randomAlphabet: SplitFlapRandomAlphabet = .classic
     var idleShuffleEnabled: Bool = true
     var idleDensity: Double = 0.04
     var targetRows: Int = 9
@@ -118,6 +182,7 @@ enum SplitFlapConfigurationStore {
         static let messageOrder = "messageOrder"
         static let messageHoldSeconds = "messageHoldSeconds"
         static let waveIntervalSeconds = "waveIntervalSeconds"
+        static let randomAlphabet = "randomAlphabet"
         static let idleShuffleEnabled = "idleShuffleEnabled"
         static let idleDensity = "idleDensity"
         static let targetRows = "targetRows"
@@ -129,6 +194,7 @@ enum SplitFlapConfigurationStore {
             messageOrder,
             messageHoldSeconds,
             waveIntervalSeconds,
+            randomAlphabet,
             idleShuffleEnabled,
             idleDensity,
             targetRows,
@@ -150,6 +216,7 @@ enum SplitFlapConfigurationStore {
             Key.messageOrder: fallback.messageOrder.rawValue,
             Key.messageHoldSeconds: fallback.messageHoldSeconds,
             Key.waveIntervalSeconds: fallback.waveIntervalSeconds,
+            Key.randomAlphabet: fallback.randomAlphabet.rawValue,
             Key.idleShuffleEnabled: fallback.idleShuffleEnabled,
             Key.idleDensity: fallback.idleDensity,
             Key.targetRows: fallback.targetRows,
@@ -162,6 +229,7 @@ enum SplitFlapConfigurationStore {
             messageOrder: SplitFlapMessageOrder(rawValue: defaults.string(forKey: Key.messageOrder) ?? "") ?? fallback.messageOrder,
             messageHoldSeconds: bounded(defaults.double(forKey: Key.messageHoldSeconds), min: 0, max: 30, fallback: fallback.messageHoldSeconds),
             waveIntervalSeconds: bounded(defaults.double(forKey: Key.waveIntervalSeconds), min: 2, max: 60, fallback: fallback.waveIntervalSeconds),
+            randomAlphabet: SplitFlapRandomAlphabet(rawValue: defaults.string(forKey: Key.randomAlphabet) ?? "") ?? fallback.randomAlphabet,
             idleShuffleEnabled: defaults.object(forKey: Key.idleShuffleEnabled) as? Bool ?? fallback.idleShuffleEnabled,
             idleDensity: bounded(defaults.double(forKey: Key.idleDensity), min: 0, max: 0.2, fallback: fallback.idleDensity),
             targetRows: min(max(defaults.integer(forKey: Key.targetRows), 4), 24),
@@ -176,6 +244,7 @@ enum SplitFlapConfigurationStore {
         defaults.set(configuration.messageOrder.rawValue, forKey: Key.messageOrder)
         defaults.set(configuration.messageHoldSeconds, forKey: Key.messageHoldSeconds)
         defaults.set(configuration.waveIntervalSeconds, forKey: Key.waveIntervalSeconds)
+        defaults.set(configuration.randomAlphabet.rawValue, forKey: Key.randomAlphabet)
         defaults.set(configuration.idleShuffleEnabled, forKey: Key.idleShuffleEnabled)
         defaults.set(configuration.idleDensity, forKey: Key.idleDensity)
         defaults.set(configuration.targetRows, forKey: Key.targetRows)
@@ -293,7 +362,7 @@ final class SplitFlapContentProvider {
 
     private func randomTargets(rows: Int, cols: Int) -> [[SplitFlapCharacter]] {
         (0..<rows).map { _ in
-            (0..<cols).map { _ in SplitFlapCharacter.random() }
+            (0..<cols).map { _ in SplitFlapCharacter.random(in: configuration.randomAlphabet) }
         }
     }
 
