@@ -24,9 +24,10 @@ private final class TimerTicker: DisplayTicker {
 }
 
 // Controls *when* and *which* panels flip.
-// Two phases alternate automatically:
-//   1. Idle shuffle — panels drift to random characters individually
-//   2. Wave update  — a left-to-right wave sweeps across all panels
+// Three phases cycle automatically:
+//   1. Hold        — completed message remains untouched
+//   2. Idle shuffle — panels drift to random characters individually
+//   3. Wave update  — a left-to-right wave sweeps across all panels
 final class DisplayClock: NSObject {
 
     private weak var grid: CharacterGrid?
@@ -43,6 +44,7 @@ final class DisplayClock: NSObject {
     private var isRunning = false
 
     private enum Phase {
+        case hold       // message remains fully visible
         case idle       // random individual flips
         case wave       // coordinated left-to-right wave
     }
@@ -88,7 +90,7 @@ final class DisplayClock: NSObject {
         stop()
         runGeneration += 1
         isRunning = true
-        phase = .idle
+        phase = .hold
         phaseTickCount = 0
         lastIdleTickTimestamp = nil
         lastClockTickTimestamp = nil
@@ -113,7 +115,7 @@ final class DisplayClock: NSObject {
                 panel.cancelFlip()
             }
         }
-        phase = .idle
+        phase = .hold
         phaseTickCount = 0
     }
 
@@ -154,6 +156,12 @@ final class DisplayClock: NSObject {
         phaseTickCount += 1
 
         switch phase {
+        case .hold:
+            if phaseTickCount >= holdTickDuration {
+                phase = .idle
+                phaseTickCount = 0
+            }
+
         case .idle:
             if configuration.idleShuffleEnabled {
                 idleTick(grid: grid)
@@ -168,7 +176,7 @@ final class DisplayClock: NSObject {
             // Wave animation timing is encoded in each panel's animation beginTime.
             // We just count ticks to know when to return to idle.
             if phaseTickCount >= waveTickDuration {
-                phase = .idle
+                phase = .hold
                 phaseTickCount = 0
             }
         }
@@ -259,16 +267,16 @@ final class DisplayClock: NSObject {
         startWave(grid: grid)
     }
 
-    private var cycleTickDuration: Int {
-        max(1, Int(configuration.waveIntervalSeconds / idleTickInterval))
+    private var holdTickDuration: Int {
+        max(0, Int(configuration.messageHoldSeconds / idleTickInterval))
     }
 
     private var idleTickDuration: Int {
-        max(1, cycleTickDuration - waveTickDuration)
+        max(1, Int(configuration.waveIntervalSeconds / idleTickInterval))
     }
 
     private var waveTickDuration: Int {
-        max(20, cycleTickDuration / 2)
+        max(20, Int(3 / idleTickInterval))
     }
 
     private func applyTargets(_ targets: [[SplitFlapCharacter]], grid: CharacterGrid) {

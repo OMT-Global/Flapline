@@ -10,6 +10,8 @@ final class SplitFlapConfigureSheetController: NSObject, NSWindowDelegate {
     private let modePopup = NSPopUpButton()
     private let messageTextView = NSTextView()
     private let orderPopup = NSPopUpButton()
+    private let holdSlider = NSSlider(value: 4, minValue: 0, maxValue: 30, target: nil, action: nil)
+    private let holdValueLabel = NSTextField(labelWithString: "")
     private let waveSlider = NSSlider(value: 8, minValue: 2, maxValue: 60, target: nil, action: nil)
     private let waveValueLabel = NSTextField(labelWithString: "")
     private let idleShuffleButton = NSButton(checkboxWithTitle: "Shuffle idle panels between waves", target: nil, action: nil)
@@ -23,7 +25,7 @@ final class SplitFlapConfigureSheetController: NSObject, NSWindowDelegate {
         self.configuration = configuration
         self.onSave = onSave
         self.window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 560, height: 520),
+            contentRect: NSRect(x: 0, y: 0, width: 560, height: 560),
             styleMask: [.titled],
             backing: .buffered,
             defer: false
@@ -71,7 +73,7 @@ final class SplitFlapConfigureSheetController: NSObject, NSWindowDelegate {
         scrollView.heightAnchor.constraint(equalToConstant: 130).isActive = true
         scrollView.widthAnchor.constraint(equalToConstant: 500).isActive = true
 
-        [waveSlider, idleDensitySlider, rowsSlider].forEach {
+        [holdSlider, waveSlider, idleDensitySlider, rowsSlider].forEach {
             $0.translatesAutoresizingMaskIntoConstraints = false
             $0.target = self
             $0.action = #selector(sliderChanged(_:))
@@ -81,7 +83,8 @@ final class SplitFlapConfigureSheetController: NSObject, NSWindowDelegate {
         stack.addArrangedSubview(row(label: "Display", control: modePopup))
         stack.addArrangedSubview(labeledBlock(label: "Messages", control: scrollView))
         stack.addArrangedSubview(row(label: "Message order", control: orderPopup))
-        stack.addArrangedSubview(sliderRow(label: "Wave interval", slider: waveSlider, valueLabel: waveValueLabel))
+        stack.addArrangedSubview(sliderRow(label: "Message hold", slider: holdSlider, valueLabel: holdValueLabel))
+        stack.addArrangedSubview(sliderRow(label: "Idle interval", slider: waveSlider, valueLabel: waveValueLabel))
         stack.addArrangedSubview(idleShuffleButton)
         stack.addArrangedSubview(sliderRow(label: "Idle density", slider: idleDensitySlider, valueLabel: idleDensityValueLabel))
         stack.addArrangedSubview(sliderRow(label: "Board rows", slider: rowsSlider, valueLabel: rowsValueLabel))
@@ -116,6 +119,7 @@ final class SplitFlapConfigureSheetController: NSObject, NSWindowDelegate {
         modePopup.selectItem(at: SplitFlapDisplayMode.allCases.firstIndex(of: configuration.displayMode) ?? 0)
         messageTextView.string = configuration.messageText
         orderPopup.selectItem(at: SplitFlapMessageOrder.allCases.firstIndex(of: configuration.messageOrder) ?? 0)
+        holdSlider.doubleValue = configuration.messageHoldSeconds
         waveSlider.doubleValue = configuration.waveIntervalSeconds
         idleShuffleButton.state = configuration.idleShuffleEnabled ? .on : .off
         idleDensitySlider.doubleValue = configuration.idleDensity
@@ -157,6 +161,7 @@ final class SplitFlapConfigureSheetController: NSObject, NSWindowDelegate {
     }
 
     private func updateValueLabels() {
+        holdValueLabel.stringValue = "\(Int(holdSlider.doubleValue.rounded())) sec"
         waveValueLabel.stringValue = "\(Int(waveSlider.doubleValue.rounded())) sec"
         idleDensityValueLabel.stringValue = "\(Int((idleDensitySlider.doubleValue * 100).rounded()))%"
         rowsValueLabel.stringValue = "\(rowsSlider.integerValue)"
@@ -166,6 +171,7 @@ final class SplitFlapConfigureSheetController: NSObject, NSWindowDelegate {
         configuration.displayMode = SplitFlapDisplayMode.allCases[safe: modePopup.indexOfSelectedItem] ?? .messages
         configuration.messageText = messageTextView.string
         configuration.messageOrder = SplitFlapMessageOrder.allCases[safe: orderPopup.indexOfSelectedItem] ?? .sequential
+        configuration.messageHoldSeconds = holdSlider.doubleValue.rounded()
         configuration.waveIntervalSeconds = waveSlider.doubleValue.rounded()
         configuration.idleShuffleEnabled = idleShuffleButton.state == .on
         configuration.idleDensity = idleDensitySlider.doubleValue

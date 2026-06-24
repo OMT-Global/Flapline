@@ -85,6 +85,7 @@ struct SplitFlapConfiguration {
     var displayMode: SplitFlapDisplayMode = .messages
     var messageText: String = "Flapline\nUnicode OK\nHello World"
     var messageOrder: SplitFlapMessageOrder = .sequential
+    var messageHoldSeconds: TimeInterval = 4
     var waveIntervalSeconds: TimeInterval = 8
     var idleShuffleEnabled: Bool = true
     var idleDensity: Double = 0.04
@@ -115,6 +116,7 @@ enum SplitFlapConfigurationStore {
         static let displayMode = "displayMode"
         static let messageText = "messageText"
         static let messageOrder = "messageOrder"
+        static let messageHoldSeconds = "messageHoldSeconds"
         static let waveIntervalSeconds = "waveIntervalSeconds"
         static let idleShuffleEnabled = "idleShuffleEnabled"
         static let idleDensity = "idleDensity"
@@ -125,6 +127,7 @@ enum SplitFlapConfigurationStore {
             displayMode,
             messageText,
             messageOrder,
+            messageHoldSeconds,
             waveIntervalSeconds,
             idleShuffleEnabled,
             idleDensity,
@@ -145,6 +148,7 @@ enum SplitFlapConfigurationStore {
             Key.displayMode: fallback.displayMode.rawValue,
             Key.messageText: fallback.messageText,
             Key.messageOrder: fallback.messageOrder.rawValue,
+            Key.messageHoldSeconds: fallback.messageHoldSeconds,
             Key.waveIntervalSeconds: fallback.waveIntervalSeconds,
             Key.idleShuffleEnabled: fallback.idleShuffleEnabled,
             Key.idleDensity: fallback.idleDensity,
@@ -156,6 +160,7 @@ enum SplitFlapConfigurationStore {
             displayMode: SplitFlapDisplayMode(rawValue: defaults.string(forKey: Key.displayMode) ?? "") ?? fallback.displayMode,
             messageText: defaults.string(forKey: Key.messageText) ?? fallback.messageText,
             messageOrder: SplitFlapMessageOrder(rawValue: defaults.string(forKey: Key.messageOrder) ?? "") ?? fallback.messageOrder,
+            messageHoldSeconds: bounded(defaults.double(forKey: Key.messageHoldSeconds), min: 0, max: 30, fallback: fallback.messageHoldSeconds),
             waveIntervalSeconds: bounded(defaults.double(forKey: Key.waveIntervalSeconds), min: 2, max: 60, fallback: fallback.waveIntervalSeconds),
             idleShuffleEnabled: defaults.object(forKey: Key.idleShuffleEnabled) as? Bool ?? fallback.idleShuffleEnabled,
             idleDensity: bounded(defaults.double(forKey: Key.idleDensity), min: 0, max: 0.2, fallback: fallback.idleDensity),
@@ -169,6 +174,7 @@ enum SplitFlapConfigurationStore {
         defaults.set(configuration.displayMode.rawValue, forKey: Key.displayMode)
         defaults.set(configuration.messageText, forKey: Key.messageText)
         defaults.set(configuration.messageOrder.rawValue, forKey: Key.messageOrder)
+        defaults.set(configuration.messageHoldSeconds, forKey: Key.messageHoldSeconds)
         defaults.set(configuration.waveIntervalSeconds, forKey: Key.waveIntervalSeconds)
         defaults.set(configuration.idleShuffleEnabled, forKey: Key.idleShuffleEnabled)
         defaults.set(configuration.idleDensity, forKey: Key.idleDensity)
