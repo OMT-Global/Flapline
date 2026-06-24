@@ -480,6 +480,9 @@ final class SplitFlapContentProvider {
         self.configuration = configuration
         messageIndex = min(messageIndex, max(configuration.messages.count - 1, 0))
         messagePageIndex = 0
+        if configuration.messageOrder == .random {
+            messageIndex = randomMessageIndex(messageCount: configuration.messages.count)
+        }
     }
 
     func nextTargets(rows: Int, cols: Int, preview: Bool = false) -> [[SplitFlapCharacter]] {
@@ -518,13 +521,7 @@ final class SplitFlapContentProvider {
 
     private func messagePage(advance: Bool, rows: Int, cols: Int) -> [[SplitFlapCharacter]] {
         let messages = configuration.messages
-        let message: String
-        switch configuration.messageOrder {
-        case .sequential:
-            message = messages[messageIndex % messages.count]
-        case .random:
-            message = messages.randomElement() ?? "Flapline"
-        }
+        let message = messages[messageIndex % messages.count]
 
         let pageRows = pagedLines(message, rows: rows, cols: cols)
         let currentPage = min(messagePageIndex, max(pageRows.count - 1, 0))
@@ -538,17 +535,31 @@ final class SplitFlapContentProvider {
     }
 
     private func advanceMessageCursor(pageCount: Int) {
+        if messagePageIndex + 1 < pageCount {
+            messagePageIndex += 1
+            return
+        }
+
+        messagePageIndex = 0
         switch configuration.messageOrder {
         case .sequential:
-            if messagePageIndex + 1 < pageCount {
-                messagePageIndex += 1
-            } else {
-                messagePageIndex = 0
-                messageIndex = (messageIndex + 1) % configuration.messages.count
-            }
+            messageIndex = (messageIndex + 1) % configuration.messages.count
         case .random:
-            messagePageIndex = 0
+            messageIndex = randomMessageIndex(messageCount: configuration.messages.count, excluding: messageIndex)
         }
+    }
+
+    private func randomMessageIndex(messageCount: Int, excluding currentIndex: Int? = nil) -> Int {
+        guard messageCount > 1 else { return 0 }
+        guard let currentIndex else {
+            return Int.random(in: 0..<messageCount)
+        }
+
+        var nextIndex = currentIndex
+        while nextIndex == currentIndex {
+            nextIndex = Int.random(in: 0..<messageCount)
+        }
+        return nextIndex
     }
 
     private func randomTargets(rows: Int, cols: Int) -> [[SplitFlapCharacter]] {
