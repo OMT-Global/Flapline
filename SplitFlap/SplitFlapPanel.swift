@@ -334,6 +334,17 @@ final class SplitFlapPanel {
         guard steps > 0 else { completion?(); return }
         guard !isFlipping else { completion?(); return }
 
+        if steps == 1 {
+            flipSingleStep(
+                to: target,
+                beginTime: beginTime,
+                batchedTransaction: batchedTransaction,
+                shouldContinue: shouldContinue,
+                completion: completion
+            )
+            return
+        }
+
         // Drum characters keep their mechanical forward sequence. Arbitrary
         // Unicode graphemes are valid targets and resolve as a direct flip.
         let seq = currentCharacter.sequence(to: target)
@@ -456,6 +467,85 @@ final class SplitFlapPanel {
             anim.isRemovedOnCompletion = false
             layer.add(anim, forKey: key)
         }
+        if !batchedTransaction {
+            CATransaction.commit()
+        }
+    }
+
+    /// The idle path overwhelmingly consists of one-position drum advances.
+    /// Installing the target top and incoming bottom contents once, then
+    /// animating only transforms, avoids four IOSurface content tracks.
+    private func flipSingleStep(
+        to target: SplitFlapCharacter,
+        beginTime: CFTimeInterval,
+        batchedTransaction: Bool,
+        shouldContinue: @escaping () -> Bool,
+        completion: (() -> Void)?
+    ) {
+        guard let targetTop = glyph(target, .top),
+              let targetBottom = glyph(target, .bottom)
+        else {
+            setCharacter(target, animated: false)
+            completion?()
+            return
+        }
+
+        beginFlipping()
+
+        if !batchedTransaction {
+            CATransaction.begin()
+            CATransaction.setDisableActions(true)
+        }
+
+        staticTopCharacter = target
+        bottomFlapCharacter = target
+        staticTopLayer.contents = targetTop
+        bottomFlapContainer.contents = targetBottom
+        bottomFlapContainer.opacity = 0
+
+        let fall = FlipAnimator.topFallDuration
+        let rise = FlipAnimator.bottomRiseDuration
+        let total = fall + rise
+
+        let topRotation = CABasicAnimation(keyPath: "transform.rotation.x")
+        topRotation.fromValue = 0.0
+        topRotation.toValue = -Double.pi / 2
+        topRotation.duration = fall
+        topRotation.timingFunction = CAMediaTimingFunction(name: .easeIn)
+
+        let bottomRotation = CABasicAnimation(keyPath: "transform.rotation.x")
+        bottomRotation.fromValue = Double.pi / 2
+        bottomRotation.toValue = 0.0
+        bottomRotation.beginTime = beginTime + fall
+        bottomRotation.duration = rise
+        bottomRotation.timingFunction = CAMediaTimingFunction(name: .easeOut)
+        bottomRotation.fillMode = .backwards
+        bottomRotation.delegate = FlipCompletionDelegate { [weak self] finished in
+            guard let self else { return }
+            guard finished, shouldContinue() else { completion?(); return }
+            self.concludeFlip(to: target)
+            completion?()
+        }
+
+        let bottomOpacity = CAKeyframeAnimation(keyPath: "opacity")
+        bottomOpacity.values = [0.0, 1.0]
+        bottomOpacity.keyTimes = [0.0, NSNumber(value: fall / total), 1.0]
+        bottomOpacity.calculationMode = .discrete
+        bottomOpacity.duration = total
+
+        for animation in [topRotation, bottomOpacity] {
+            animation.beginTime = beginTime
+            animation.fillMode = .forwards
+            animation.isRemovedOnCompletion = false
+        }
+        bottomRotation.fillMode = .both
+        bottomRotation.isRemovedOnCompletion = false
+        bottomOpacity.fillMode = .both
+
+        topFlapContainer.add(topRotation, forKey: "flipRotation")
+        bottomFlapContainer.add(bottomRotation, forKey: "flipRotation")
+        bottomFlapContainer.add(bottomOpacity, forKey: "flipOpacity")
+
         if !batchedTransaction {
             CATransaction.commit()
         }

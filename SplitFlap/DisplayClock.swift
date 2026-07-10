@@ -50,11 +50,11 @@ final class DisplayClock: NSObject {
     }
 
     // Tick interval for the idle phase (seconds between random panel checks)
-    private let idleTickInterval: TimeInterval = 0.15
-    private let maxIdleFlipStartsPerTick: Int = 12
-    private let maxActiveIdleFlips: Int = 48
+    private let idleTickInterval: TimeInterval = 0.5
+    private let maxIdleFlipStartsPerTick: Int = 4
+    private let maxActiveIdleFlips: Int = 12
     private var runGeneration: Int = 0
-    private let tickerInterval: TimeInterval = 0.1
+    private let tickerInterval: TimeInterval = 0.5
 
     // MARK: - Init
 
@@ -214,7 +214,12 @@ final class DisplayClock: NSObject {
 
             let panel = all[index]
             guard !panel.isFlipping else { continue }
-            let target = SplitFlapCharacter.random(in: configuration.randomAlphabet)
+            // Idle drift is intentionally a single mechanical step. Choosing a
+            // random destination averaged half the 43-position drum per panel,
+            // forcing Core Animation to encode thousands of IOSurface-backed
+            // keyframes every second even though the visual intent is a small
+            // background shuffle.
+            let target = panel.currentCharacter.idleSuccessor
             guard panel.currentCharacter != target else { continue }
             animator.animateTo(
                 target,
