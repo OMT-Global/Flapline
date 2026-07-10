@@ -7,8 +7,17 @@ internal static class NativeMethods
 {
     internal const int GwlStyle = -16;
     internal const long WsChild = 0x40000000L;
+    internal const long WsPopup = 0x80000000L;
+    internal const long WsCaption = 0x00C00000L;
+    internal const long WsSysMenu = 0x00080000L;
+    internal const long WsThickFrame = 0x00040000L;
+    internal const long WsMinimizeBox = 0x00020000L;
+    internal const long WsMaximizeBox = 0x00010000L;
+    internal const uint SwpNoSize = 0x0001;
+    internal const uint SwpNoMove = 0x0002;
     internal const uint SwpNoZOrder = 0x0004;
     internal const uint SwpNoActivate = 0x0010;
+    internal const uint SwpFrameChanged = 0x0020;
 
     [StructLayout(LayoutKind.Sequential)]
     internal struct Rect

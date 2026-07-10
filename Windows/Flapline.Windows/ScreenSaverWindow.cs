@@ -16,6 +16,13 @@ internal sealed class ScreenSaverWindow : Window
 
     internal event Action? ExitRequested;
 
+    private const long PreviewTopLevelStyles = NativeMethods.WsPopup
+        | NativeMethods.WsCaption
+        | NativeMethods.WsSysMenu
+        | NativeMethods.WsThickFrame
+        | NativeMethods.WsMinimizeBox
+        | NativeMethods.WsMaximizeBox;
+
     internal ScreenSaverWindow(FlaplineSettings settings, nint previewParent)
         : this(settings)
     {
@@ -63,9 +70,21 @@ internal sealed class ScreenSaverWindow : Window
         var handle = new WindowInteropHelper(this).Handle;
         if (IsPreview)
         {
-            NativeMethods.SetWindowStyle(
+            var previewStyle = (NativeMethods.GetWindowStyle(handle) | NativeMethods.WsChild)
+                & ~PreviewTopLevelStyles;
+            NativeMethods.SetWindowStyle(handle, previewStyle);
+            _ = NativeMethods.SetWindowPos(
                 handle,
-                NativeMethods.GetWindowStyle(handle) | NativeMethods.WsChild
+                0,
+                0,
+                0,
+                0,
+                0,
+                NativeMethods.SwpNoMove
+                    | NativeMethods.SwpNoSize
+                    | NativeMethods.SwpNoZOrder
+                    | NativeMethods.SwpNoActivate
+                    | NativeMethods.SwpFrameChanged
             );
             _ = NativeMethods.SetParent(handle, previewParent);
             if (NativeMethods.GetClientRect(previewParent, out var rectangle))
