@@ -3,3 +3,6 @@
 .derivedData/
 build/
 dist/
+artifacts/
+Windows/**/bin/
+Windows/**/obj/

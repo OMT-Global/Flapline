@@ -41,6 +41,14 @@ struct SplitFlapCharacter: Hashable {
         return Self.drumCharacters[nextIndex]
     }
 
+    // Idle drift should advance only one mechanical position. Unknown Unicode
+    // glyphs have no drum position, so return to the blank flap in one direct
+    // transition instead of leaving that panel permanently stuck.
+    var idleSuccessor: SplitFlapCharacter {
+        let successor = next
+        return successor == self ? .space : successor
+    }
+
     // Number of forward steps needed to reach `target` from `self`.
     func stepsTo(_ target: SplitFlapCharacter) -> Int {
         guard let sourceIndex = drumIndex, let targetIndex = target.drumIndex else {

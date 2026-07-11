@@ -58,7 +58,6 @@ final class SplitFlapView: ScreenSaverView {
 
         clock = DisplayClock(grid: g, configuration: configuration, isPreview: isPreview)
         clock?.showImmediateFrame()
-        refreshMessageFeedIfNeeded()
 
         // Do NOT use animateOneFrame() timer — animation is scheduled by
         // DisplayClock and played by Core Animation.
@@ -115,6 +114,16 @@ final class SplitFlapView: ScreenSaverView {
         }
     }
 
+    override func viewDidHide() {
+        super.viewDidHide()
+        stopClock()
+    }
+
+    override func viewDidUnhide() {
+        super.viewDidUnhide()
+        updateClockForVisibility()
+    }
+
     // MARK: - Misc
 
     override var isOpaque: Bool { true }
@@ -154,7 +163,6 @@ final class SplitFlapView: ScreenSaverView {
         )
         clock?.update(configuration: updated)
         clock?.showImmediateFrame()
-        refreshMessageFeedIfNeeded()
         updateClockForVisibility(restartIfRunning: true)
     }
 
@@ -190,9 +198,11 @@ final class SplitFlapView: ScreenSaverView {
     }
 
     private var shouldRunClock: Bool {
-        guard let window else { return false }
-        return window.isVisible
-            && !window.isMiniaturized
+        guard isAnimating, let window else { return false }
+        guard !isHiddenOrHasHiddenAncestor else { return false }
+        guard window.isVisible && !window.isMiniaturized else { return false }
+        return isPreviewInstance
+            || window.occlusionState.contains(.visible)
     }
 
     private func updateClockForVisibility(restartIfRunning: Bool = false) {
@@ -212,6 +222,7 @@ final class SplitFlapView: ScreenSaverView {
         guard isClockRunning else { return }
         clock?.stop()
         isClockRunning = false
+        stopMessageFeedRefresh()
     }
 
     private func refreshMessageFeedIfNeeded() {
@@ -245,7 +256,7 @@ final class SplitFlapView: ScreenSaverView {
     }
 
     private func applyFetchedMessages(_ messages: [String]) {
-        guard !messages.isEmpty else { return }
+        guard isClockRunning, !messages.isEmpty else { return }
         configuration.fetchedMessageText = messages.joined(separator: "\n")
         clock?.update(configuration: configuration)
         clock?.showImmediateFrame()

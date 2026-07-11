@@ -3,14 +3,14 @@
 **A split-flap screensaver with somewhere to be.**
 
 Flapline brings the soft shuffle of old airport and train-station departure
-boards to your Mac. It flips, drifts, clicks through messages, shows the time
+boards to your Mac or Windows PC. It flips, drifts, clicks through messages, shows the time
 or date, and then gets out of the way when the screen saver is not running.
 
-Built in Swift with macOS `ScreenSaver`, Core Animation, and a small affection
-for mechanical things that do one job beautifully.
+Built with Swift and Core Animation on macOS, C# and WPF on Windows, and a
+small affection for mechanical things that do one job beautifully.
 
 [![Swift](https://img.shields.io/badge/Swift-5-orange?logo=swift)](https://www.swift.org/)
-![Platform](https://img.shields.io/badge/macOS-screensaver-blue)
+![Platform](https://img.shields.io/badge/macOS%20%7C%20Windows-screensaver-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 ## What It Does
@@ -82,6 +82,18 @@ Xcode:
 3. Build.
 4. Copy `Flapline.saver` from the build products into `~/Library/Screen Savers/`.
 
+### Windows
+
+The Windows port builds a native, self-contained `.scr` for x64 or Arm64 with
+the .NET 8 SDK:
+
+```powershell
+.\Windows\build.ps1 -Runtime win-x64
+```
+
+See [Windows/README.md](Windows/README.md) for build, install, preview, and
+configuration details.
+
 ## Website
 
 The public site is intentionally small and static:
@@ -114,6 +126,7 @@ domain, signing, website, and release checklist.
 | `SplitFlap/` | Screensaver source code |
 | `SplitFlap/Info.plist` | Bundle metadata and principal class |
 | `SplitFlap.xcodeproj` | Xcode project |
+| `Windows/` | Native Windows `.scr` host, tests, and build/install scripts |
 | `website/` | Static public website for `flapline.app` |
 | `scripts/ci/` | Fast, extended, and release validation scripts |
 | `docs/release/` | Public launch and release guidance |
