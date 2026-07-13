@@ -79,15 +79,14 @@ The `macOS Notarized Release` workflow runs on an exact `vX.Y.Z` tag or by
 manual dispatch. It uses the protected `prod` GitHub environment and requires
 these environment secrets:
 
-- `MACOS_DEVELOPER_ID_P12_BASE64`: base64-encoded Developer ID Application P12.
-- `MACOS_DEVELOPER_ID_P12_PASSWORD`: password for that P12.
-- `MACOS_KEYCHAIN_PASSWORD`: an arbitrary, per-run keychain password.
-- `MACOS_DEVELOPER_ID_APPLICATION`: exact Developer ID Application certificate name.
-- `APPLE_NOTARY_KEY_BASE64`: base64-encoded App Store Connect API-key P8.
+- `APPLE_DEVELOPER_CERT_P12`: base64-encoded Developer ID Application P12.
+- `APPLE_CERT_PASSWORD`: password for that P12.
+- `APPLE_DEVELOPER_IDENTITY`: exact Developer ID Application certificate name.
+- `APPLE_NOTARY_PRIVATE_KEY`: base64-encoded App Store Connect API-key P8.
 - `APPLE_NOTARY_KEY_ID`: App Store Connect API key ID.
-- `APPLE_NOTARY_ISSUER_ID`: App Store Connect issuer ID.
+- `APPLE_NOTARY_KEY_ISSUER`: App Store Connect issuer ID.
 
-The workflow imports the certificate into a temporary keychain, signs the
+These names match APW CLI's existing release contract. The workflow imports the certificate into a temporary keychain, signs the
 bundle with hardened runtime and a secure timestamp, creates a DMG, notarizes
 it with `notarytool`, staples the resulting ticket, and uploads the DMG plus a
 SHA-256 checksum to the matching GitHub Release. No Apple credential belongs in

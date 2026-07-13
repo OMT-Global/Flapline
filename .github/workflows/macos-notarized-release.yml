@@ -34,45 +34,17 @@ jobs:
           [[ "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "Version must be SemVer." >&2; exit 1; }
           echo "value=${version}" >> "$GITHUB_OUTPUT"
 
-      - name: Import Developer ID certificate
+      - name: Build, sign, notarize, and staple DMG
         shell: bash
         env:
-          CERTIFICATE_BASE64: ${{ secrets.MACOS_DEVELOPER_ID_P12_BASE64 }}
-          CERTIFICATE_PASSWORD: ${{ secrets.MACOS_DEVELOPER_ID_P12_PASSWORD }}
-          KEYCHAIN_PASSWORD: ${{ secrets.MACOS_KEYCHAIN_PASSWORD }}
-        run: |
-          keychain="$RUNNER_TEMP/flapline-signing.keychain-db"
-          certificate="$RUNNER_TEMP/developer-id.p12"
-          echo "$CERTIFICATE_BASE64" | base64 -D > "$certificate"
-          security create-keychain -p "$KEYCHAIN_PASSWORD" "$keychain"
-          security set-keychain-settings -lut 21600 "$keychain"
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$keychain"
-          security import "$certificate" -k "$keychain" -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$keychain"
-          security list-keychain -d user -s "$keychain"
-
-      - name: Build signed DMG
-        shell: bash
-        env:
-          DEVELOPER_ID_APPLICATION: ${{ secrets.MACOS_DEVELOPER_ID_APPLICATION }}
           RELEASE_VERSION: ${{ steps.version.outputs.value }}
+          APPLE_DEVELOPER_CERT_P12: ${{ secrets.APPLE_DEVELOPER_CERT_P12 }}
+          APPLE_CERT_PASSWORD: ${{ secrets.APPLE_CERT_PASSWORD }}
+          APPLE_DEVELOPER_IDENTITY: ${{ secrets.APPLE_DEVELOPER_IDENTITY }}
+          APPLE_NOTARY_KEY_ID: ${{ secrets.APPLE_NOTARY_KEY_ID }}
+          APPLE_NOTARY_KEY_ISSUER: ${{ secrets.APPLE_NOTARY_KEY_ISSUER }}
+          APPLE_NOTARY_PRIVATE_KEY: ${{ secrets.APPLE_NOTARY_PRIVATE_KEY }}
         run: bash scripts/ci/run-macos-notarized-release.sh
-
-      - name: Notarize and staple DMG
-        shell: bash
-        env:
-          NOTARY_KEY_BASE64: ${{ secrets.APPLE_NOTARY_KEY_BASE64 }}
-          NOTARY_KEY_ID: ${{ secrets.APPLE_NOTARY_KEY_ID }}
-          NOTARY_ISSUER_ID: ${{ secrets.APPLE_NOTARY_ISSUER_ID }}
-          RELEASE_VERSION: ${{ steps.version.outputs.value }}
-        run: |
-          key="$RUNNER_TEMP/AuthKey_${NOTARY_KEY_ID}.p8"
-          dmg="dist/release/Flapline-${RELEASE_VERSION}-macOS.dmg"
-          echo "$NOTARY_KEY_BASE64" | base64 -D > "$key"
-          xcrun notarytool submit "$dmg" --key "$key" --key-id "$NOTARY_KEY_ID" --issuer "$NOTARY_ISSUER_ID" --wait
-          xcrun stapler staple "$dmg"
-          xcrun stapler validate "$dmg"
-          shasum -a 256 "$dmg" > "${dmg}.sha256"
 
       - name: Publish GitHub release assets
         shell: bash
