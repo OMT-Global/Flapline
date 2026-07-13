@@ -14,6 +14,7 @@ repo:
     - CODEOWNERS
     - .githooks/**
     - .devcontainer/**
+    - .github/PULL_REQUEST_TEMPLATE.md
     - .github/workflows/pr-fast-ci.yml
     - .github/workflows/extended-validation.yml
     - .github/workflows/claude.yml
