@@ -100,6 +100,21 @@ jobs:
             ONLY_ACTIVE_ARCH=NO \
             build
 
+  notarized-release-script-checks:
+    name: Notarized Release Script Checks
+    runs-on: ['self-hosted', 'linux', 'shell-only', 'public']
+    timeout-minutes: 10
+    needs: changes
+    if: >-
+      github.event.pull_request.draft == false &&
+      needs.changes.outputs.ci == 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Validate macOS notarized release script
+        run: bash scripts/ci/test-macos-notarized-release.sh
   validate-pr-description:
     name: Validate PR Description
     runs-on: ['self-hosted', 'linux', 'shell-only', 'public']
@@ -170,6 +185,7 @@ jobs:
       - changes
       - fast-checks
       - macos-checks
+      - notarized-release-script-checks
       - validate-pr-description
       - validate-secrets
     steps:
@@ -179,6 +195,7 @@ jobs:
             changes=${{ needs.changes.result }}
             fast-checks=${{ needs.fast-checks.result }}
             macos-checks=${{ needs.macos-checks.result }}
+            notarized-release-script-checks=${{ needs.notarized-release-script-checks.result }}
             validate-pr-description=${{ needs.validate-pr-description.result }}
             validate-secrets=${{ needs.validate-secrets.result }}
         run: |
