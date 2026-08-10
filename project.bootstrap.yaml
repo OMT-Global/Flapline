@@ -146,6 +146,9 @@ github:
     hasWiki: false
     hasDiscussions: false
 ci:
+  codeqlLanguages:
+    - csharp
+    - swift
   runnerPolicy: hybrid-safe
   nodeVersion: "20"
   pythonVersion: "3.12"
