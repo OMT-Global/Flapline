@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "owner": "bootstrap",
+  "templateVersion": "2026.03.28.2",
+  "regenerationCommand": "bootstrap apply repo --manifest ./project.bootstrap.yaml",
+  "managedFiles": {
+    ".githooks/pre-commit": {
+      "sha256": "992bc9b04d62f84df70ba1e42d7159a1d976190eae41597810aaafaa30252a4d",
+      "source": "bootstrap"
+    },
+    ".github/PULL_REQUEST_TEMPLATE.md": {
+      "sha256": "b95b973bf0e6f5cdf77ad9d84e2f623525e493beed185d7d7b3093a4f50ec59d",
+      "source": "bootstrap"
+    },
+    ".github/workflows/extended-validation.yml": {
+      "sha256": "0439564ea1c345bc4eab96cb809f84081cea1ab59a803f30216e397c4604a30b",
+      "source": "bootstrap"
+    },
+    ".github/workflows/pr-fast-ci.yml": {
+      "sha256": "13bb2d55a66e80942e28804260edee65f95c6118ad68117f6b229f1c6feb562b",
+      "source": "bootstrap"
+    },
+    "AGENTS.md": {
+      "sha256": "8acfcb8fe4d902e7892abdee9db7073c4f5fe33ac4733813c83a83434885a997",
+      "source": "bootstrap"
+    },
+    "CODEOWNERS": {
+      "sha256": "d5b88668ece5258a10e66ab476d2135250623474ff24d14748d071c5076559b0",
+      "source": "bootstrap"
+    },
+    "docs/bootstrap/codex-cloud-environment.md": {
+      "sha256": "476679fa2e922e4006d7d2ce56c9390ff79725002226ca6daa841bc316110050",
+      "source": "bootstrap"
+    },
+    "docs/bootstrap/issue-hygiene.md": {
+      "sha256": "039344533cc90b966fd7ef6501bf6cfb956b5edc61126ad9c14aad545c315580",
+      "source": "bootstrap"
+    },
+    "docs/bootstrap/next-steps.md": {
+      "sha256": "4e471faef1858d9f2c36328f10621dccd6b01fdc2fd33bd6547d494518b469b9",
+      "source": "bootstrap"
+    },
+    "docs/bootstrap/onboarding.md": {
+      "sha256": "2b42311ef9ef3ab29b129eb991df28486f75cb07f1e265a42956644bdbca8ece",
+      "source": "bootstrap"
+    },
+    "docs/bootstrap/security.md": {
+      "sha256": "b188ba22ac664f0d5ed8e558993f443ca5de73d3c7d7dfc2cc2f9e2a3feefd1d",
+      "source": "bootstrap"
+    },
+    "docs/bootstrap/versioning.md": {
+      "sha256": "b121a25a937fa7a8ab344e9a6280a4feedc8fd00d8008d2bc9b71800a192858c",
+      "source": "bootstrap"
+    },
+    "project.bootstrap.yaml": {
+      "sha256": "80255da2808cc5027918ffc986efb2a99a287a73efe9b353bfd0f4a9c6b416fc",
+      "source": "bootstrap"
+    },
+    "scripts/check-detect-secrets.sh": {
+      "sha256": "7f94837cceed656f03390b3af615d260558ae71ed6e88c1580239b90d5115fa8",
+      "source": "bootstrap"
+    },
+    "scripts/ci/check-action-pins.sh": {
+      "sha256": "4aaf63706ea4ba1754077fb449ffca310d971b9879ec999d26a3f942122788f8",
+      "source": "bootstrap"
+    },
+    "scripts/ci/check-pr-governance.sh": {
+      "sha256": "296a576f96a19af3785a31a472640bf5e342113f64a366f7ca3292883c46f17c",
+      "source": "bootstrap"
+    },
+    "scripts/ci/report-issue-hygiene.mjs": {
+      "sha256": "53bc2252f82e388ec4ba182cab500b78b3f429c304501a55c205ad3f0e534087",
+      "source": "bootstrap"
+    },
+    "scripts/ci/run-extended-validation.sh": {
+      "sha256": "f2adbf95dde8933d554389d596ca874e48b81c7b58b9da2e64011042bb75d3a0",
+      "source": "bootstrap"
+    },
+    "scripts/ci/run-fast-checks.sh": {
+      "sha256": "e8e20e1e3ca4bdb83d2b5e98a3546ea204a472850621c44d014b047680030cb5",
+      "source": "bootstrap"
+    },
+    "scripts/ci/run-release-build.sh": {
+      "sha256": "cc54d4ed42eaf697e0cbe01b5c061fd2927dfee893bf93c1a1a0708e9d5311f7",
+      "source": "bootstrap"
+    },
+    "scripts/ci/run-release-publish.sh": {
+      "sha256": "cb724dfaf963306f310e8991701120f316002e474290655ee84e4bc425759340",
+      "source": "bootstrap"
+    },
+    "scripts/ci/run-release-verification.sh": {
+      "sha256": "eb6b330b37c0d552f9acae353d5ef046688b90a38e9a76e0972c43d6dd72b8eb",
+      "source": "bootstrap"
+    },
+    "scripts/ci/run-release-version.sh": {
+      "sha256": "c96508d021cc2af055bd797869827969fb3118697f1b2c7931d68644459d6e71",
+      "source": "bootstrap"
+    },
+    "scripts/codex-cloud/maintenance.sh": {
+      "sha256": "8a4f5e11b133539c46dd9d45e74d49b19e0fb092e3620f2af8552e07cf94dabc",
+      "source": "bootstrap"
+    },
+    "scripts/codex-cloud/setup.sh": {
+      "sha256": "debc23607cccb92ed096941adc7da777ff794ec8c97d4efa842e592b33c29d10",
+      "source": "bootstrap"
+    }
+  }
+}

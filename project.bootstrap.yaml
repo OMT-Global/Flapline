@@ -154,6 +154,9 @@ ci:
   extendedChecks:
     - template-review
   nightlyCron: 0 7 * * *
+  codeqlLanguages:
+    - csharp
+    - swift
   additionalWorkflows: []
   appPaths:
     - SplitFlap/**
@@ -327,6 +330,7 @@ agents:
   manageCodexHome: true
   codexProfile: default
   sharedSkills: []
+exceptions: []
 environments:
   dev:
     reviewers: []
