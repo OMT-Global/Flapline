@@ -3,6 +3,8 @@ name: PR Fast CI
 on:
   pull_request:
     types: [opened, edited, synchronize, reopened, ready_for_review]
+  pull_request_review:
+    types: [submitted, edited, dismissed]
 
 concurrency:
   group: pr-fast-${{ github.event.pull_request.number || github.ref }}
@@ -29,7 +31,7 @@ jobs:
       ci: ${{ steps.filter.outputs.ci }}
       apple: ${{ steps.filter.outputs.apple }}
     steps:
-      - uses: dorny/paths-filter@v4
+      - uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706 # v4
         id: filter
         with:
           filters: |
@@ -70,7 +72,7 @@ jobs:
       github.event.pull_request.draft == false &&
       (needs.changes.outputs.app == 'true' || needs.changes.outputs.ci == 'true')
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
@@ -86,7 +88,7 @@ jobs:
       github.event.pull_request.draft == false &&
       (needs.changes.outputs.apple == 'true' || needs.changes.outputs.ci == 'true')
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
@@ -109,17 +111,102 @@ jobs:
       github.event.pull_request.draft == false &&
       needs.changes.outputs.ci == 'true'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Validate macOS notarized release script
         run: bash scripts/ci/test-macos-notarized-release.sh
+
+  verify-dependabot-commits:
+    name: Verify Dependabot-only Commits
+    runs-on: ['self-hosted', 'linux', 'shell-only', 'public']
+    timeout-minutes: 5
+    if: github.event.pull_request.draft == false
+    outputs:
+      bot_only: ${{ steps.verify.outputs.bot_only }}
+    env:
+      PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+      PR_COMMITS_URL: ${{ github.event.pull_request.commits_url }}
+      PR_BASE_REPO: ${{ github.event.pull_request.base.repo.full_name }}
+      PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - id: verify
+        name: Require Dependabot commits or verified main merges
+        run: |
+          set -euo pipefail
+          page=1
+          commits_seen=0
+          bot_only=false
+          merge_tree_repo="$(mktemp -d)"
+          trap 'rm -rf "$merge_tree_repo"' EXIT
+          git -C "$merge_tree_repo" init -q
+          git -C "$merge_tree_repo" remote add origin "https://github.com/$PR_BASE_REPO.git"
+          git_auth="$(printf 'x-access-token:%s' "$GITHUB_TOKEN" | base64 | tr -d '\n')"
+          git -C "$merge_tree_repo" config http.extraheader "Authorization: Basic $git_auth"
+          git -C "$merge_tree_repo" fetch --no-tags origin "$PR_BASE_SHA" >/dev/null 2>&1
+          base_first_parent_contains() {
+            git -C "$merge_tree_repo" rev-list --first-parent "$PR_BASE_SHA" | grep -F -x "$1" >/dev/null
+          }
+          verify_merge_tree() {
+            local merge_commit="$1"
+            local first_parent="$2"
+            local second_parent="$3"
+            git -C "$merge_tree_repo" fetch --no-tags origin "$merge_commit" "$first_parent" "$second_parent" >/dev/null 2>&1 || return 1
+            local actual_tree
+            local expected_tree
+            actual_tree="$(git -C "$merge_tree_repo" rev-parse "$merge_commit^{tree}")" || return 1
+            [[ -n "$actual_tree" ]] || return 1
+            expected_tree="$(git -C "$merge_tree_repo" merge-tree --write-tree "$first_parent" "$second_parent" 2>/dev/null)" || return 1
+            [[ -n "$expected_tree" ]] || return 1
+            [[ "$actual_tree" == "$expected_tree" ]]
+          }
+          if [[ "$PR_AUTHOR" == "dependabot[bot]" ]]; then
+            bot_only=true
+            previous_commit=""
+            while :; do
+              response="$(curl --fail-with-body --silent --show-error --location --header "Authorization: Bearer $GITHUB_TOKEN" --header "Accept: application/vnd.github+json" "$PR_COMMITS_URL?per_page=100&page=$page")"
+              jq -e 'type == "array"' <<<"$response" >/dev/null
+              count="$(jq 'length' <<<"$response")"
+              [[ "$count" -gt 0 ]] || break
+              commits_seen=$((commits_seen + count))
+              while IFS= read -r commit; do
+                commit_sha="$(jq -r '.sha' <<<"$commit")"
+                first_parent="$(jq -r '.parents[0].sha' <<<"$commit")"
+                if jq -e '(.committer != null and .committer.login == "web-flow" and .commit.verification.verified == true and .commit.verification.reason == "valid" and .author != null and .author.login == "dependabot[bot]")' <<<"$commit" >/dev/null; then
+                  valid_commit=false
+                  if [[ "$(jq '.parents | length' <<<"$commit")" == 1 ]] && { [[ -z "$previous_commit" ]] && base_first_parent_contains "$first_parent" || [[ "$first_parent" == "$previous_commit" ]]; }; then
+                    valid_commit=true
+                  fi
+                elif jq -e '(.committer != null and .committer.login == "web-flow" and .commit.verification.verified == true and .commit.verification.reason == "valid" and .author != null and .author.type == "User" and (.parents | length) == 2 and ((.commit.message // "") | test("^Merge branch.*main.*into dependabot/")))' <<<"$commit" >/dev/null; then
+                  second_parent="$(jq -r '.parents[1].sha' <<<"$commit")"
+                  valid_commit=false
+                  if { [[ -z "$previous_commit" ]] && base_first_parent_contains "$first_parent" || [[ "$first_parent" == "$previous_commit" ]]; } && base_first_parent_contains "$second_parent" && verify_merge_tree "$commit_sha" "$first_parent" "$second_parent"; then
+                    valid_commit=true
+                  fi
+                else
+                  valid_commit=false
+                fi
+                if [[ "$valid_commit" != true ]]; then
+                  bot_only=false
+                fi
+                previous_commit="$commit_sha"
+              done < <(jq -c '.[]' <<<"$response")
+              [[ "$count" -lt 100 ]] && break
+              page=$((page + 1))
+            done
+            [[ "$commits_seen" -gt 0 ]] || bot_only=false
+          fi
+          echo "Verified $commits_seen PR commit(s); Dependabot-only=$bot_only"
+          echo "bot_only=$bot_only" >> "$GITHUB_OUTPUT"
+
   validate-pr-description:
     name: Validate PR Description
     runs-on: ['self-hosted', 'linux', 'shell-only', 'public']
     timeout-minutes: 5
-    if: github.event.pull_request.draft == false
+    if: github.event.pull_request.draft == false && needs.verify-dependabot-commits.outputs.bot_only != 'true'
+    needs: verify-dependabot-commits
     env:
       PR_BODY: ${{ github.event.pull_request.body }}
     steps:
@@ -171,11 +258,46 @@ jobs:
     timeout-minutes: 10
     if: github.event.pull_request.draft == false
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
       - name: Scan repository for secret patterns
         run: bash scripts/check-detect-secrets.sh --all-files
+
+  validate-pr-governance:
+    name: Validate PR Governance
+    runs-on: ['self-hosted', 'linux', 'shell-only', 'public']
+    timeout-minutes: 5
+    if: github.event.pull_request.draft == false && needs.verify-dependabot-commits.outputs.bot_only != 'true'
+    needs: verify-dependabot-commits
+    env:
+      PR_TITLE: ${{ github.event.pull_request.title }}
+      PR_BODY: ${{ github.event.pull_request.body }}
+      PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+      PR_CREATED_AT: ${{ github.event.pull_request.created_at }}
+      PR_GOVERNANCE_ENFORCE_AFTER: ''
+      PR_FILES_URL: ${{ github.event.pull_request.url }}/files
+      PR_COMMITS_URL: ${{ github.event.pull_request.commits_url }}
+      PR_REVIEWS_URL: ${{ github.event.pull_request.url }}/reviews
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Validate title, DCO, size, ADR, and reviewer evidence
+        run: bash scripts/ci/check-pr-governance.sh
+
+  validate-action-pins:
+    name: Validate Action Pins
+    runs-on: ['self-hosted', 'linux', 'shell-only', 'public']
+    timeout-minutes: 5
+    if: github.event.pull_request.draft == false
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Require immutable third-party action pins
+        run: bash scripts/ci/check-action-pins.sh
 
   ci-gate:
     name: CI Gate
@@ -186,8 +308,11 @@ jobs:
       - fast-checks
       - macos-checks
       - notarized-release-script-checks
+      - verify-dependabot-commits
       - validate-pr-description
       - validate-secrets
+      - validate-pr-governance
+      - validate-action-pins
     steps:
       - name: Check required PR jobs
         env:
@@ -196,8 +321,11 @@ jobs:
             fast-checks=${{ needs.fast-checks.result }}
             macos-checks=${{ needs.macos-checks.result }}
             notarized-release-script-checks=${{ needs.notarized-release-script-checks.result }}
+            verify-dependabot-commits=${{ needs.verify-dependabot-commits.result }}
             validate-pr-description=${{ needs.validate-pr-description.result }}
             validate-secrets=${{ needs.validate-secrets.result }}
+            validate-pr-governance=${{ needs.validate-pr-governance.result }}
+            validate-action-pins=${{ needs.validate-action-pins.result }}
         run: |
           failed=0
           for entry in $RESULTS; do

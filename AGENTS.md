@@ -3,8 +3,9 @@
 - Always work on a feature branch. Hooks block commits to `main` and `master`; enable them with `git config core.hooksPath .githooks`.
 - Stack baseline: Generic polyglot.
 - CI baseline: fast PR checks stay cheap and shell-safe; extended validation runs on `main`, nightly, or manual dispatch.
-- Self-hosted runner policy: shell-safe jobs must use `[self-hosted, linux, shell-only, public]`; native repos must use self-hosted runners for required automation, with Docker, service-container, browser, or `container:` workloads routed to dedicated self-hosted capability pools.
+- Self-hosted runner policy: private-repository trusted jobs may use their matching capability pool. Public repository security workflows use GitHub-hosted isolation; fork pull-request jobs always remain read-only and GitHub-hosted.
 - Add or update tests for every interactive, branching, or operator-facing behavior change.
+- For a task that may open or update a PR, handle autoreview access before implementation: request required network access immediately and, for a private repository, explicit authorization to send the forthcoming intended PR diff to the external reviewer. At closeout, use the `autoreview` skill against the actual base. Verify every finding, fix accepted in-scope findings, and rerun affected tests and autoreview after changes. Proceed only when no accepted/actionable findings remain, and record the final command and result in the PR validation evidence. If authorization is declined or the skill is unavailable or cannot complete, stop and report the blocker instead of bypassing the gate.
 - PRs must use the generated pull request template. The required PR gate validates summary, issue linkage, validation evidence, and risk notes.
 - Never commit real secrets, runtime auth, or machine-local env files. Use templates and GitHub environments instead.
 

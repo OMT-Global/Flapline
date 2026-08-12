@@ -31,7 +31,7 @@ jobs:
       ci: ${{ steps.preset.outputs.ci || steps.filter.outputs.ci || 'false' }}
       extended: ${{ steps.preset.outputs.extended || steps.filter.outputs.extended || 'false' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         if: github.event_name == 'push'
         with:
           fetch-depth: 0
@@ -46,7 +46,7 @@ jobs:
           extended=true
           EOF
 
-      - uses: dorny/paths-filter@v4
+      - uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706 # v4
         id: filter
         if: github.event_name == 'push'
         with:
@@ -86,7 +86,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.app == 'true' || needs.changes.outputs.ci == 'true'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Run fast checks
         run: bash scripts/ci/run-fast-checks.sh
@@ -96,9 +96,9 @@ jobs:
     runs-on: ['self-hosted', 'linux', 'shell-only', 'public']
     timeout-minutes: 20
     needs: changes
-    if: needs.changes.outputs.extended == 'true'
+    if: needs.changes.outputs.extended == 'true' || needs.changes.outputs.app == 'true'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Run extended validation
         run: bash scripts/ci/run-extended-validation.sh
@@ -110,7 +110,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.app == 'true'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Run macOS validation
         run: |
@@ -127,7 +127,7 @@ jobs:
     runs-on: ['self-hosted', 'linux', 'shell-only', 'public']
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Scan repository for secret patterns
         run: bash scripts/check-detect-secrets.sh --all-files
 
