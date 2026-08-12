@@ -13,11 +13,11 @@
       "source": "bootstrap"
     },
     ".github/workflows/extended-validation.yml": {
-      "sha256": "0439564ea1c345bc4eab96cb809f84081cea1ab59a803f30216e397c4604a30b",
+      "sha256": "289fb90434cadb649f1a8a9fb20f81bd41bef715e95e97ec0e035b85f484a8d5",
       "source": "bootstrap"
     },
     ".github/workflows/pr-fast-ci.yml": {
-      "sha256": "13bb2d55a66e80942e28804260edee65f95c6118ad68117f6b229f1c6feb562b",
+      "sha256": "f413e640cfd0775da195b4d2ca6fd38f71fcb37c3571bfaadf9773b10555286b",
       "source": "bootstrap"
     },
     "AGENTS.md": {

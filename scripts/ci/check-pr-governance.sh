@@ -89,6 +89,9 @@ for commit in commits:
     account_type = (commit.get("author") or {}).get("type", "")
     if account_type == "Bot" or login.endswith("[bot]"):
         continue
+    if len(commit.get("parents") or []) >= 2:
+        # Main-sync merge commits carry no trailers; DCO applies to authored commits.
+        continue
     message = (commit.get("commit") or {}).get("message", "")
     if not re.search(r"(?im)^signed-off-by:\s+.+ <[^>]+>$", message):
         missing_dco.append(commit.get("sha", "unknown")[:12])

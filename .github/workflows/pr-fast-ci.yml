@@ -29,6 +29,7 @@ jobs:
     outputs:
       app: ${{ steps.filter.outputs.app }}
       ci: ${{ steps.filter.outputs.ci }}
+      apple: ${{ steps.filter.outputs.apple }}
     steps:
       - uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706 # v4
         id: filter
@@ -58,6 +59,9 @@ jobs:
               - 'docs/bootstrap/**'
               - '.env.example'
               - 'CODEOWNERS'
+            apple:
+              - 'SplitFlap/**'
+              - 'SplitFlap.xcodeproj/**'
 
   fast-checks:
     name: Fast Checks
@@ -74,6 +78,45 @@ jobs:
 
       - name: Run fast checks
         run: bash scripts/ci/run-fast-checks.sh
+
+  macos-checks:
+    name: macOS Checks
+    runs-on: ['self-hosted', 'private', 'macOS', 'ARM64', 'xcode']
+    timeout-minutes: 15
+    needs: changes
+    if: >-
+      github.event.pull_request.draft == false &&
+      (needs.changes.outputs.apple == 'true' || needs.changes.outputs.ci == 'true')
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Run macOS validation
+        run: |
+          xcodebuild \
+            -project SplitFlap.xcodeproj \
+            -scheme SplitFlap \
+            -configuration Release \
+            -derivedDataPath build \
+            ONLY_ACTIVE_ARCH=NO \
+            build
+
+  notarized-release-script-checks:
+    name: Notarized Release Script Checks
+    runs-on: ['self-hosted', 'linux', 'shell-only', 'public']
+    timeout-minutes: 10
+    needs: changes
+    if: >-
+      github.event.pull_request.draft == false &&
+      needs.changes.outputs.ci == 'true'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Validate macOS notarized release script
+        run: bash scripts/ci/test-macos-notarized-release.sh
 
   verify-dependabot-commits:
     name: Verify Dependabot-only Commits
@@ -263,6 +306,8 @@ jobs:
     needs:
       - changes
       - fast-checks
+      - macos-checks
+      - notarized-release-script-checks
       - verify-dependabot-commits
       - validate-pr-description
       - validate-secrets
@@ -274,6 +319,8 @@ jobs:
           RESULTS: >-
             changes=${{ needs.changes.result }}
             fast-checks=${{ needs.fast-checks.result }}
+            macos-checks=${{ needs.macos-checks.result }}
+            notarized-release-script-checks=${{ needs.notarized-release-script-checks.result }}
             verify-dependabot-commits=${{ needs.verify-dependabot-commits.result }}
             validate-pr-description=${{ needs.validate-pr-description.result }}
             validate-secrets=${{ needs.validate-secrets.result }}
