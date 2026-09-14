@@ -28,7 +28,7 @@ Use this checklist after the first bootstrap render or whenever `project.bootstr
 ## Runner Policy
 
 - Shell-safe jobs must use `[self-hosted, linux, shell-only, public]`.
-- Native repos must use self-hosted runners for required automation; Docker, service-container, browser, and `container:` workloads require a dedicated self-hosted runner pool with matching capability labels.
+- Flapline native validation uses GitHub-hosted `macos-15`, never a personal Mac; Docker, service-container, browser, and `container:` workloads require a dedicated self-hosted runner pool with matching capability labels.
 - Keep PR checks cheap. Add heavy validation to `scripts/ci/run-extended-validation.sh` instead of the PR lane.
 
 - Consume shared security, release, and AI attestation workflows from the control-plane repo once those contracts are pinned for production use.
@@ -61,3 +61,15 @@ Use this checklist after the first bootstrap render or whenever `project.bootstr
 
 - Run `bootstrap apply home --manifest ./project.bootstrap.yaml` after reviewing the bundled profile content.
 - The bootstrap manages portable Codex assets only. Auth, sessions, caches, and machine-local state stay unmanaged.
+
+## Native ownership boundary
+
+Bootstrap manages only `.githooks/pre-commit` and its generated ownership sidecar.
+The existing Swift screensaver, Xcode build/sign/package scripts, contributor
+instructions, team CODEOWNERS, and workflows are repository-owned. Broad generic
+rendering must not replace these with polyglot placeholders. Reconcile using the
+current Bootstrap renderer in plan mode and review any proposed ownership change.
+The PR macOS build remains a CI Gate dependency for application and CI changes;
+the extended native lane and notarized-release script tests are preserved.
+Hosted macOS avoids routing this public repository's code to a personal Mac.
+No GitHub protection, environment, or release-signing settings are changed.

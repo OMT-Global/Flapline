@@ -8,22 +8,8 @@ project:
   defaultBranch: main
 repo:
   managedPaths:
-    - project.bootstrap.yaml
-    - AGENTS.md
-    - CLAUDE.md
-    - CODEOWNERS
-    - .githooks/**
-    - .devcontainer/**
-    - .github/PULL_REQUEST_TEMPLATE.md
-    - .github/workflows/pr-fast-ci.yml
-    - .github/workflows/extended-validation.yml
-    - .github/workflows/claude.yml
-    - scripts/check-detect-secrets.sh
-    - scripts/ci/**
-    - scripts/codex-cloud/**
-    - scripts/claude-cloud/**
-    - scripts/claude/**
-    - docs/bootstrap/**
+    - .githooks/pre-commit
+
 archetype:
   kind: generic-empty
   packageManager: npm
@@ -169,11 +155,7 @@ ci:
       - SplitFlap/**
       - SplitFlap.xcodeproj/**
     runsOn:
-      - self-hosted
-      - private
-      - macOS
-      - ARM64
-      - xcode
+      - macos-15
     command: |
       xcodebuild \
         -project SplitFlap.xcodeproj \
@@ -248,6 +230,9 @@ ci:
         echo "SplitFlapPanel must render cached glyph contents through IOSurface."
         exit 1
       fi
+      bash scripts/ci/check-action-pins.sh
+
+      bash scripts/ci/test-action-pins.sh
     extended: |
       bash scripts/ci/run-fast-checks.sh
       echo "No extended checks configured for the generic archetype yet."
