@@ -56,3 +56,6 @@ if ! grep -q 'import IOSurface' SplitFlap/SplitFlapPanel.swift; then
   echo "SplitFlapPanel must render cached glyph contents through IOSurface."
   exit 1
 fi
+
+bash scripts/ci/check-action-pins.sh
+bash scripts/ci/test-action-pins.sh

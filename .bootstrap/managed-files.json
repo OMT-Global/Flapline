@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "owner": "bootstrap",
+  "templateVersion": "2026.03.28.2",
+  "regenerationCommand": "bootstrap apply repo --manifest ./project.bootstrap.yaml",
+  "managedFiles": {
+    ".githooks/pre-commit": {
+      "sha256": "992bc9b04d62f84df70ba1e42d7159a1d976190eae41597810aaafaa30252a4d",
+      "source": "bootstrap"
+    }
+  }
+}
