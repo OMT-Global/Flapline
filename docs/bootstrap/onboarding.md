@@ -27,8 +27,8 @@ Use this checklist after the first bootstrap render or whenever `project.bootstr
 
 ## Runner Policy
 
-- Shell-safe jobs must use `[self-hosted, linux, shell-only, public]`.
-- Flapline native validation uses GitHub-hosted `macos-15`, never a personal Mac; Docker, service-container, browser, and `container:` workloads require a dedicated self-hosted runner pool with matching capability labels.
+- PR, comment-triggered, shell-safe Linux, and Pages jobs stay on GitHub-hosted runners.
+- PR native checks remain hosted macos-15. Trusted native validation uses only the immutable reusable callee in the restricted macos-public-trusted group on existing Lume ARM64 VMs. No fork-controlled workflow may reach any self-hosted group. Release signing remains hosted and environment-gated.
 - Keep PR checks cheap. Add heavy validation to `scripts/ci/run-extended-validation.sh` instead of the PR lane.
 
 - Consume shared security, release, and AI attestation workflows from the control-plane repo once those contracts are pinned for production use.
@@ -71,5 +71,16 @@ rendering must not replace these with polyglot placeholders. Reconcile using the
 current Bootstrap renderer in plan mode and review any proposed ownership change.
 The PR macOS build remains a CI Gate dependency for application and CI changes;
 the extended native lane and notarized-release script tests are preserved.
-Hosted macOS avoids routing this public repository's code to a personal Mac.
+Hosted PR macOS avoids routing fork code to persistent hosts. Only the pinned, input-free callee may execute trusted main on Lume.
 No GitHub protection, environment, or release-signing settings are changed.
+
+
+## Immutable native source retention
+Retain the immutable source ref after squash merge: GitHub reusable-workflow resolution
+requires reachable source. The caller and runner-group selector both pin the same full
+commit SHA. Do not update either without independent source/policy review. The exact
+bootstrap branch dispatch checks out the fixed pre-migration base, never arbitrary
+branch code. Production main events check out github.sha. PR checks stay hosted.
+The unchanged hybrid-safe manifest macosCheck describes the hosted PR lane; workflows
+are repository-owned (managedPaths contains only the pre-commit hook). No generic
+renderer can safely replace this explicit trust split.

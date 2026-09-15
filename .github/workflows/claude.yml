@@ -29,12 +29,7 @@ jobs:
       (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
       (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
       (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude'))
-    runs-on:
-      group: synology-private
-      labels:
-        - self-hosted
-        - Linux
-        - shell-only
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
       contents: write
@@ -71,7 +66,7 @@ jobs:
             Use CLAUDE.md and docs/bootstrap/onboarding.md as repo policy context.
             Keep required PR status checks aligned with CI Gate.
             Preserve the split fast and extended validation model.
-            Shell-safe jobs may use `[self-hosted, synology, shell-only, public]`.
+            PR and comment-triggered jobs must stay on GitHub-hosted runners.
             Docker, service-container, browser, and `container:` jobs stay on GitHub-hosted runners.
             Prefer the smallest safe change and add tests for behavior changes.
 

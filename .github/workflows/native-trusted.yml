@@ -1,0 +1,45 @@
+name: Immutable Flapline Native Validation
+on:
+  workflow_call:
+permissions:
+  contents: read
+jobs:
+  native:
+    name: macOS Checks
+    if: >-
+      github.repository == 'OMT-Global/Flapline' &&
+      ((github.ref == 'refs/heads/main' &&
+      (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')) ||
+      (github.ref == 'refs/heads/fix/trusted-native-bootstrap' && github.event_name == 'workflow_dispatch'))
+    runs-on:
+      group: macos-public-trusted
+      labels: [self-hosted, macOS, ARM64, xcode]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.ref == 'refs/heads/main' && github.sha || 'd364788df150aca819b9ecd9deff7c32f01a614e' }}
+          persist-credentials: false
+      - name: Verify trusted checkout and toolchain
+        env:
+          EXPECTED_SHA: ${{ github.ref == 'refs/heads/main' && github.sha || 'd364788df150aca819b9ecd9deff7c32f01a614e' }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          test "$(uname -m)" = arm64
+          xcodebuild -version
+      - name: Run macOS validation
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project SplitFlap.xcodeproj \
+            -scheme SplitFlap \
+            -configuration Release \
+            -derivedDataPath build \
+            ONLY_ACTIVE_ARCH=NO \
+            build
+      - name: Run fast and release-script checks
+        run: |
+          set -euo pipefail
+          bash scripts/ci/run-fast-checks.sh
+          bash scripts/ci/test-macos-notarized-release.sh

@@ -24,7 +24,7 @@ defaults:
 jobs:
   publish:
     name: Publish flapline.app
-    runs-on: ['self-hosted', 'linux', 'shell-only', 'public']
+    runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: https://flapline.app
