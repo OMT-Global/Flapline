@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import hashlib
+import re
 from pathlib import Path
 import sys
 
@@ -18,8 +19,7 @@ def validate(root):
         if path == workflow:
             continue
         text = path.read_text()
-        if 'self-hosted' in text or 'group:' in '
-'.join(line for line in text.splitlines() if 'runner' in line):
+        if 'self-hosted' in text or re.search(r'runs-on:\s*\n\s+group:', text):
             raise ValueError('Alternate self-hosted path: ' + path.name)
 
 if __name__ == '__main__':
