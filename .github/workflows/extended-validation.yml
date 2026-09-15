@@ -105,22 +105,9 @@ jobs:
 
   macos-checks:
     name: macOS Checks
-    runs-on: macos-15
-    timeout-minutes: 20
     needs: changes
     if: needs.changes.outputs.app == 'true'
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-
-      - name: Run macOS validation
-        run: |
-          xcodebuild \
-            -project SplitFlap.xcodeproj \
-            -scheme SplitFlap \
-            -configuration Release \
-            -derivedDataPath build \
-            ONLY_ACTIVE_ARCH=NO \
-            build
+    uses: OMT-Global/Flapline/.github/workflows/native-trusted.yml@39a20bd3f530292a03cd1f102826c166115974ab
 
   validate-secrets:
     name: Validate Secrets

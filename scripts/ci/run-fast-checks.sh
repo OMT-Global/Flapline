@@ -59,3 +59,6 @@ fi
 
 bash scripts/ci/check-action-pins.sh
 bash scripts/ci/test-action-pins.sh
+
+python3 scripts/ci/check-native-contract.py
+python3 scripts/ci/test-native-contract.py
