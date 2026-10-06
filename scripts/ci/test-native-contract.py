@@ -19,9 +19,10 @@ class NativeBoundary(unittest.TestCase):
             ('native-trusted.yml', "github.event_name == 'push'", "github.event_name == 'pull_request'"),
             ('native-trusted.yml', "github.repository == 'OMT-Global/Flapline'", "true"),
             ('native-trusted.yml', 'persist-credentials: false', 'persist-credentials: true'),
+            ('native-trusted.yml', 'runs-on: macos-15-arm64', 'runs-on: [self-hosted, macOS, ARM64, xcode]'),
             ('native-trusted.yml', 'ONLY_ACTIVE_ARCH=NO', 'ONLY_ACTIVE_ARCH=YES'),
             ('native-trusted.yml', 'github.sha', 'github.event.pull_request.head.sha'),
-            ('extended-validation.yml', '@39a20bd3f530292a03cd1f102826c166115974ab', '@main'),
+            ('extended-validation.yml', '@2a5b2ae2675186b0913d6ed1c0d1ff9e35fbc3ad', '@main'),
             ('pr-fast-ci.yml', 'runs-on: ubuntu-latest', "runs-on: [self-hosted, linux]"),
             ('claude.yml', 'runs-on: ubuntu-latest', "runs-on: [self-hosted, linux]"),
         ]

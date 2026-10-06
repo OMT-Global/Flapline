@@ -3,7 +3,7 @@
 - Always work on a feature branch. Hooks block commits to `main` and `master`; enable them with `git config core.hooksPath .githooks`.
 - Stack baseline: Generic polyglot.
 - CI baseline: fast PR checks stay cheap and shell-safe; extended validation runs on `main`, nightly, or manual dispatch.
-- Runner policy: PR, comment, Linux, Pages and release jobs stay GitHub-hosted. Trusted native validation alone uses the exact SHA-pinned reusable workflow admitted by macos-public-trusted on existing Lume ARM64 VMs, never the personal host. All alternate public self-hosted group access must exclude this repository. No caller inputs, commands, or secrets may reach that callee.
+- Runner policy: PR, comment, Linux, Pages and release jobs stay GitHub-hosted. Trusted native validation uses the exact SHA-pinned reusable workflow on GitHub-hosted `macos-15-arm64` with Xcode 16.4. All alternate public self-hosted group access must exclude this repository. No caller inputs, commands, or secrets may reach that callee.
 - Add or update tests for every interactive, branching, or operator-facing behavior change.
 - PRs must use the generated pull request template. The required PR gate validates summary, issue linkage, validation evidence, and risk notes.
 - Never commit real secrets, runtime auth, or machine-local env files. Use templates and GitHub environments instead.
