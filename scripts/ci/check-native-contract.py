@@ -5,8 +5,8 @@ from pathlib import Path
 import sys
 
 ROOT = Path(__file__).resolve().parents[2]
-EXPECTED = '4c3a0aa1a56cc08d83074207b2ab58051ce772241984c10d8db09bec290399c3'
-TARGET = 'OMT-Global/Flapline/.github/workflows/native-trusted.yml@2a5b2ae2675186b0913d6ed1c0d1ff9e35fbc3ad'
+EXPECTED = '788615f11474103035501f6ea7380116e53ef57a48bb6ac2585455015e221163'
+TARGET = 'OMT-Global/Flapline/.github/workflows/native-trusted.yml@19590e95cfa40ce282b00d2816a77d84f9f5280a'
 
 def validate(root):
     workflow = root / '.github/workflows/native-trusted.yml'

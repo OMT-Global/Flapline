@@ -107,7 +107,7 @@ jobs:
     name: macOS Checks
     needs: changes
     if: needs.changes.outputs.app == 'true'
-    uses: OMT-Global/Flapline/.github/workflows/native-trusted.yml@2a5b2ae2675186b0913d6ed1c0d1ff9e35fbc3ad
+    uses: OMT-Global/Flapline/.github/workflows/native-trusted.yml@19590e95cfa40ce282b00d2816a77d84f9f5280a
 
   validate-secrets:
     name: Validate Secrets

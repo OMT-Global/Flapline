@@ -28,7 +28,7 @@ Use this checklist after the first bootstrap render or whenever `project.bootstr
 ## Runner Policy
 
 - PR, comment-triggered, shell-safe Linux, and Pages jobs stay on GitHub-hosted runners.
-- PR native checks remain hosted macos-15. Trusted native validation uses the immutable reusable callee on GitHub-hosted `macos-15-arm64` with explicit Xcode 16.4 selection. No fork-controlled workflow may reach any self-hosted group. Release signing remains hosted and environment-gated.
+- PR native checks remain hosted macos-15. Trusted native validation uses the immutable reusable callee on GitHub-hosted `macos-15` with explicit Xcode 16.4 selection. No fork-controlled workflow may reach any self-hosted group. Release signing remains hosted and environment-gated.
 - Keep PR checks cheap. Add heavy validation to `scripts/ci/run-extended-validation.sh` instead of the PR lane.
 
 - Consume shared security, release, and AI attestation workflows from the control-plane repo once those contracts are pinned for production use.
