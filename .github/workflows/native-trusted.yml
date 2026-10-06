@@ -11,10 +11,10 @@ jobs:
       ((github.ref == 'refs/heads/main' &&
       (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')) ||
       (github.ref == 'refs/heads/fix/trusted-native-bootstrap' && github.event_name == 'workflow_dispatch'))
-    runs-on:
-      group: macos-public-trusted
-      labels: [self-hosted, macOS, ARM64, xcode]
+    runs-on: macos-15-arm64
     timeout-minutes: 20
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
